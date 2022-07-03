@@ -1,13 +1,15 @@
 from __future__ import print_function
 import pickle as pickle
 import sys
+from Class_League import League
+from Class_Schedule import Schedule
 
 
 def main():
     league_management_url = "https://docs.google.com/spreadsheets/d/1il67Iw7e4w7QcA2Mf2w8DaZgV4qnOggOYHJIVfEV9Ew"
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1kcnj4X01u5wpCghAi1yDCEBR54bnGv69bx-hVXVljIk"
 
-    league_2021 = reload_league_data_from_gsheet(_load_from_gsheets=True,
+    league_2021 = reload_league_data_from_gsheet(_load_from_gsheets=False,
                                                  _league_management_url=league_management_url)
     # Print League data stats
     league_2021.check_league_data()
