@@ -6,7 +6,8 @@ import itertools
 from ortools.sat.python.cp_model import IntVar, CpModel
 import pandas as pd
 import re
-from Class_League import League, write_gsheet_output_data, get_gsheet_data
+from Class_League import League
+from gsheets import get_gsheet_data, write_gsheet_output_data
 
 
 def main():
