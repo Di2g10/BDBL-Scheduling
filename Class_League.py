@@ -1,13 +1,9 @@
 from __future__ import print_function
 from typing import List, Tuple, Dict, Any, Union
-from ortools.sat.python import cp_model
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from pathlib import Path
 from datetime import datetime, timedelta, date
-
-from ortools.sat.python.cp_model import IntVar, CpModel
-
 import pandas as pd
 import time
 
@@ -282,6 +278,7 @@ class Date:
         self.league_type = _league_type
         self.weekday = _weekday
         self.court_slots = []
+        # Anchor date could be wrong for early dates added if not added in order
         self.date_delta_from_start = self.date - _date_anchor
 
     # def calculate_date_numbers(self, min_date: datetime):
