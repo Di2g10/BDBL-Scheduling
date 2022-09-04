@@ -171,6 +171,9 @@ class Schedule:
                                                            "Sheet1").get_all_records())
         _headings = ["Division", "Home Team", "Away Team", "Status", "Match Date", "Time", "Courts"]
         _unfixed_fixtures = self.league.get_fixture_court_slots()
+        if len(predefined_fixtures) == 0:
+            return
+        
         for index, row in predefined_fixtures[_headings].iterrows():
             _home_team = self.league.get_team_obj_from_str(self._fix_team_name(row["Home Team"]))
             _away_team = self.league.get_team_obj_from_str(self._fix_team_name(row["Away Team"]))
