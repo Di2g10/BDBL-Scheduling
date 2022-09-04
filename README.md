@@ -6,3 +6,7 @@ TODO
     - '3. Check Provided Enough Dates'
     - 'Lookup Lists'
 - Update Availability sheet with League Dates and bank holidays
+
+- Ensure all sheets are shared with the API user.
+
+- Update Main to link to 2022 files
