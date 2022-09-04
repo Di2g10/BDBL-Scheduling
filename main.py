@@ -6,37 +6,37 @@ from Class_Schedule import Schedule
 
 
 def main():
-    league_management_url = "https://docs.google.com/spreadsheets/d/1il67Iw7e4w7QcA2Mf2w8DaZgV4qnOggOYHJIVfEV9Ew"
-    predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1kcnj4X01u5wpCghAi1yDCEBR54bnGv69bx-hVXVljIk"
+    league_management_url = "https://docs.google.com/spreadsheets/d/1oVsXCP48k_mLEKa0EgOdmHEAPgkPqMFh2tGQPSlqbW4"
+    predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/17LYXJaFKr7CiYkZI5yD_HyyY2_FAaw00AyqHrmvqMbE"
 
-    league_2021 = reload_league_data_from_gsheet(_load_from_gsheets=False,
-                                                 _league_management_url=league_management_url)
+    league = reload_league_data_from_gsheet(_load_from_gsheets=True,
+                                            _league_management_url=league_management_url)
     # Print League data stats
-    league_2021.check_league_data()
+    league.check_league_data()
 
-    # league_2021.write_teams_entered()
+    league.write_teams_entered()
 
-    # league_2021.write_output()
+    # league.write_output()
 
-    schedule_2021 = Schedule(league_2021, predefined_fixtures_url)
+    schedule_2021 = Schedule(league, predefined_fixtures_url)
 
 
-def reload_league_data_from_gsheet(_load_from_gsheets: bool, _league_management_url):
+def reload_league_data_from_gsheet(_load_from_gsheets: bool, _league_management_url: str) -> League:
     if _load_from_gsheets:
         sys.setrecursionlimit(100000)
-        _league_2021 = League(_league_management_url)
-        with open('league2021.pkl', 'ab'):
+        _league = League(_league_management_url)
+        with open('league2022.pkl', 'ab'):
             pass
-        with open('league2021.pkl', 'wb') as f:
-            pickle.dump(_league_2021, f)
+        with open('league2022.pkl', 'wb') as f:
+            pickle.dump(_league, f)
         print("Session Saved")
     else:
-        with open('league2021.pkl', 'rb') as f:
-            _league_2021 = pickle.load(f)
+        with open('league2022.pkl', 'rb') as f:
+            _league = pickle.load(f)
         print("Session loaded")
 
-    if _league_2021:
-        return _league_2021
+    if _league:
+        return _league
     else:
         print("Load Error")
 
