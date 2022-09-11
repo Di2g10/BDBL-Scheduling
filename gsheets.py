@@ -6,6 +6,8 @@ import time
 
 
 def get_gsheet_data(_file_location, _sheet_name):
+    """Downloads data from a google sheets spreadsheet"""
+
     print(datetime.now())
     time.sleep(3)
     _scope = Path("client_secret.json")

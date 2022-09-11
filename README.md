@@ -10,3 +10,5 @@ TODO
 - Ensure all sheets are shared with the API user.
 
 - Update Main to link to 2022 files
+
+- Ensure all teams are given an appropriate division in sheet
