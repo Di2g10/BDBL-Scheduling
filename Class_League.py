@@ -46,10 +46,12 @@ class League:
             if _club:
                 _team: Team = _club.get_team(row["League"], row["Team"])
                 if _team:
-                    if _team.name == 'BH Pegasus Mixed B':
-                        print("Found")
-                        pass
-                    _team.division = int(row["New Division"])
+                    try:
+                        _team.division = int(row["New Division"])
+                    except ValueError as err:
+                        print(f'Error Cause by {row.to_markdown()}')
+                        raise ValueError(f'Error Cause by {row}')
+
                 else:
                     print("Missing Team:", row["Club"], row["League"], row["Team"])
             else:
@@ -57,7 +59,8 @@ class League:
 
         for t in self.get_teams():
             if t.division == 0:
-                raise ValueError("Team doesn't have specific rank from previous season. Missing from spreadsheet")
+                raise ValueError(f"Team {t.name} doesn't have specific rank from previous season. "
+                                 f"Missing from spreadsheet")
 
     def get_club(self, _club_name_str):
         for c in self.clubs:
