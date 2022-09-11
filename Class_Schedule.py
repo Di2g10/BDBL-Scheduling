@@ -15,8 +15,14 @@ def main():
 
 
 class Schedule:
-    def __init__(self, _league: League, _predefined_fixtures_url):
-        self.league = _league
+    def __init__(self, league: League, predefined_fixtures_url: str, allowed_run_time: int):
+        """
+
+        :param league: prepopulated class of a league structure
+        :param predefined_fixtures_url: Url of spreadsheet containing already commited match dates
+        :param allowed_run_time: Seconds the model will be left to run for before a sub optimial result will be returned
+        """
+        self.league = league
         self.model: CpModel = cp_model.CpModel()
 
         self.selected_fixture = {}
@@ -27,16 +33,16 @@ class Schedule:
         self.create_constraint_one_fixture_per_slot()
         self.create_constraint_one_fixture_per_week_per_team()
         # self.create_constraint_inter_club_matches_first()
-        self.create_constraint_fixture_correct_week(num_allowed_incorrect=4)
+        self.create_constraint_fixture_correct_week(num_allowed_incorrect=0)
         self.create_constraint_shared_players_diff_day()
         # self.create_constraint_fixture_pair_separation(weeks_separated=8)
         # self.create_constraint_mix_home_and_away_fixture(weeks_separated=2)
 
         # self.create_objective_fixture_correct_week()
 
-        self.input_predefined_fixtures(_predefined_fixtures_url)
+        self.input_predefined_fixtures(predefined_fixtures_url)
 
-        self.run_model(allowed_run_time=2000)
+        self.run_model(allowed_run_time=allowed_run_time)
 
     def create_model_variables(self):
         for _fixture_slot in self.league.get_fixture_court_slots():

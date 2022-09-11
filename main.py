@@ -18,7 +18,8 @@ def main():
 
     # league.write_output()
 
-    schedule_2021 = Schedule(league, predefined_fixtures_url)
+    schedule_2022 = Schedule(league, predefined_fixtures_url,
+                             allowed_run_time=100000)
 
 
 def reload_league_data_from_gsheet(_load_from_gsheets: bool, _league_management_url: str) -> League:
