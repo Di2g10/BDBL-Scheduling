@@ -18,8 +18,13 @@ def main():
 
     # league.write_output()
 
-    schedule_2022 = Schedule(league, predefined_fixtures_url,
-                             allowed_run_time=100000)
+    for i in range(6):
+        print(f"Number Allowed incorrect week fixture = {i}")
+        schedule_2022 = Schedule(league, predefined_fixtures_url,
+                                 allowed_run_time=100,
+                                 num_allowed_incorrect_fixture_week=i)
+        if schedule_2022.model_result != "INFEASIBLE":
+            return None
 
 
 def reload_league_data_from_gsheet(_load_from_gsheets: bool, _league_management_url: str) -> League:
