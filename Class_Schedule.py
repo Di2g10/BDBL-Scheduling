@@ -41,6 +41,7 @@ class Schedule:
         # self.create_constraint_mix_home_and_away_fixture(weeks_separated=2)
 
         # self.create_objective_fixture_correct_week()
+        self.create_objective_maximise_fixtures_scheduled()
 
         self.input_predefined_fixtures(predefined_fixtures_url)
 
@@ -52,9 +53,9 @@ class Schedule:
 
     def create_constraint_one_slot_per_fixture(self):
         for _fixture in self.league.fixtures:
-            self.model.Add(sum(self.selected_fixture[_fixture_slot.identifier]\
+            self.model.Add(sum(self.selected_fixture[_fixture_slot.identifier]
                                for _fixture_slot in _fixture.fixture_court_slots)
-                           == 1)
+                           <= 1)
 
     def create_constraint_one_fixture_per_slot(self):
         for _club in self.league.clubs:
@@ -215,8 +216,12 @@ class Schedule:
             if _fixture_slot.is_correct_week():
                 correct_week_fixture_slots.append(_fixture_slot)
 
-        self.model.Maximize(sum(self.selected_fixture[_fixture_slot.identifier]\
+        self.model.Maximize(sum(self.selected_fixture[_fixture_slot.identifier]
                                 for _fixture_slot in correct_week_fixture_slots))
+
+    def create_objective_maximise_fixtures_scheduled(self):
+        self.model.Maximize(sum(self.selected_fixture[_fixture_slot.identifier]
+                                for _fixture_slot in self.league.get_fixture_court_slots()))
 
     def run_model(self, allowed_run_time=200) -> str:
         """
@@ -251,11 +256,24 @@ class Schedule:
         objective_value = solver.ObjectiveValue()
         print("Objective Value: ", objective_value)
         if status_name in ["FEASIBLE", "OPTIMAL"]:
-            for _fixture_slot in self.league.get_fixture_court_slots():
-                _is_scheduled = solver.Value(self.selected_fixture[_fixture_slot.identifier])
-                _fixture_slot.is_scheduled = _is_scheduled
-                if _is_scheduled:
-                    print(_fixture_slot.friendly_name, _is_scheduled)
+            for fixture in self.league.fixtures:
+                fixture_has_been_scheduled = False
+                for fixture_slot in fixture.fixture_court_slots:
+                    is_scheduled = solver.Value(self.selected_fixture[fixture_slot.identifier])
+                    fixture_slot.is_scheduled = is_scheduled
+                    if is_scheduled:
+                        fixture_has_been_scheduled = True
+                        print(fixture_slot.friendly_name)
+                if fixture_has_been_scheduled is not True:
+                    print(f'Fixture not Scheduled {fixture_slot.friendly_name}')
+                    status_name = 'INFEASIBLE'
+                    print(f'Status Update: {status_name}')
+
+            # for _fixture_slot in self.league.get_fixture_court_slots():
+            #     _is_scheduled = solver.Value(self.selected_fixture[_fixture_slot.identifier])
+            #     _fixture_slot.is_scheduled = _is_scheduled
+            #     if _is_scheduled:
+            #         print(_fixture_slot.friendly_name, _is_scheduled)
             # Print Results
             self._write_schedule_to_gsheet(self.league.league_management_URL)
 
