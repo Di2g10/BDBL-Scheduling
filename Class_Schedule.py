@@ -131,12 +131,15 @@ class Schedule:
                 teams_different = t1 != t2  # probably redundant but wanting to be sure.
                 teams_adj_rank_same_league = t1.league == t2.league and abs(ord(t1.rank) - ord(t2.rank)) <= 1
                 teams_same_rank_dif_league = t1.league != t2.league and t1.rank == t2.rank
+                teams_adj_rank_dif_league = t1.league != t2.league and abs(ord(t1.rank) - ord(t2.rank)) <= 1
                 at_least_one_mixed_team = t1.league == "Mixed" or t2.league == "Mixed"
-                teams_share_players = teams_different \
-                                          and (teams_adj_rank_same_league
-                                               or (teams_same_rank_dif_league
-                                                   and at_least_one_mixed_team)
-                                               )
+                teams_share_players = (teams_different
+                                       and (teams_adj_rank_same_league
+                                            or (teams_adj_rank_dif_league
+                                                and at_least_one_mixed_team
+                                                )
+                                            )
+                                       )
                 if teams_share_players:
                     for d in self.league.dates.dates:
                         fcs_list = self.league.get_fixture_court_slots_for_teams_on_date([t1, t2], d)
