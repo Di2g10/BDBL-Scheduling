@@ -163,6 +163,18 @@ class League:
         result = min(_list)
         return result
 
+    def get_christmas_week_number(self) -> int:
+        """
+        Function to get the first schedulable week number after christmas
+        :return: 'the week number of the first date after christmas
+        """
+        dates = (d.date for d in self.dates.dates)
+        min_date = min(dates)
+        second_year = min_date.year + 1
+        dates_in_second_year = (d.get_week_number() for d in self.dates.dates if d.date.year == second_year)
+        result = min(dates_in_second_year)
+        return result
+
     def __repr__(self):
         return self.name
 
@@ -240,8 +252,8 @@ class Club:
 # dates are specific days in the league year. There should be at most one instance per day.
 class Date:
     def __init__(self, _date_str, _league_type, _weekday, _date_anchor):
-        self.date_str = _date_str
-        self.date = datetime.strptime(_date_str, '%d-%b-%Y')
+        self.date_str: str = _date_str
+        self.date: datetime = datetime.strptime(_date_str, '%d-%b-%Y')
         self.league_type = _league_type
         self.weekday = _weekday
         self.court_slots = []

@@ -34,10 +34,10 @@ class Schedule:
         self.create_constraint_one_slot_per_fixture()
         self.create_constraint_one_fixture_per_slot()
         self.create_constraint_one_fixture_per_week_per_team()
-        # self.create_constraint_inter_club_matches_first()
+        self.create_constraint_inter_club_matches_first()
         self.create_constraint_fixture_correct_week(num_allowed_incorrect=num_allowed_incorrect_fixture_week)
         self.create_constraint_shared_players_diff_day()
-        # self.create_constraint_fixture_pair_separation(weeks_separated=8)
+        self.create_constraint_fixture_pair_separation(weeks_separated=2)
         # self.create_constraint_mix_home_and_away_fixture(weeks_separated=2)
 
         # self.create_objective_fixture_correct_week()
@@ -89,25 +89,31 @@ class Schedule:
                                    <= 1)
 
     def create_constraint_inter_club_matches_first(self):
-        _min_week_num = self.league.get_min_week_number()
+        min_week_num = self.league.get_min_week_number()
+        post_xmas_week_num = self.league.get_christmas_week_number()
+
         for t in self.league.get_teams():
             af = t.club.get_all_fixtures(_is_intra_club=True, _is_inter_club=False,
                                          _include_home=True, _include_away=False)
-            num_intra_club_fixtures = len(af)
-            if num_intra_club_fixtures > 0:
+            num_fixtures = len(af)
+            if num_fixtures > 0:
                 for f in t.get_all_fixtures(_is_intra_club=True, _is_inter_club=False,
                                             _include_home=True, _include_away=True):
                     allow_fixture_slots = []
                     disallowed_fixture_slots = []
                     for fs in f.fixture_court_slots:
-                        if fs.get_week_number() - _min_week_num < num_intra_club_fixtures * 2:
+                        is_start_of_seasons_slots: bool = fs.get_week_number() - min_week_num < num_fixtures
+                        is_post_christmas_slot: bool = (
+                                post_xmas_week_num <= fs.get_week_number() <= post_xmas_week_num + num_fixtures
+                        )
+                        if is_start_of_seasons_slots or is_post_christmas_slot:
                             allow_fixture_slots.append(fs)
                         else:
                             disallowed_fixture_slots.append(fs)
                     if len(allow_fixture_slots) > 0:
                         print("Team =", t.name)
                         print("Allowed_fixture_slots =", len(allow_fixture_slots))
-                        print("Weeks to be allocated in =", num_intra_club_fixtures * 2)
+                        print("Weeks to be allocated in =", num_fixtures * 2)
                         self.model.Add(sum(self.selected_fixture[fs.identifier]
                                            for fs in disallowed_fixture_slots)
                                        <= 0)
@@ -283,7 +289,7 @@ class Schedule:
         return status_name
 
     def _write_schedule_to_gsheet(self, _file_location):
-        print("***Test***")
+        print("***Test.py***")
         result = [fcs.as_dict() for fcs in self.league.get_fixture_court_slots()]
         _data_dict = pd.DataFrame(result)
         write_gsheet_output_data(_data_dict, "Match Fixture slots", _file_location)
