@@ -9,7 +9,7 @@ def main():
     league_management_url = "https://docs.google.com/spreadsheets/d/1oVsXCP48k_mLEKa0EgOdmHEAPgkPqMFh2tGQPSlqbW4"
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/17LYXJaFKr7CiYkZI5yD_HyyY2_FAaw00AyqHrmvqMbE"
 
-    league = reload_league_data_from_gsheet(_load_from_gsheets=True,
+    league = reload_league_data_from_gsheet(_load_from_gsheets=False,
                                             _league_management_url=league_management_url)
     # Print League data stats
     league.check_league_data()
@@ -18,7 +18,7 @@ def main():
 
     # league.write_output()
 
-    for i in range(20):
+    for i in range(12,20):
         print(f"Number Allowed incorrect week fixture = {i}")
         schedule_2022 = Schedule(league, predefined_fixtures_url,
                                  allowed_run_time=100,
