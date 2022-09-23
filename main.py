@@ -18,7 +18,7 @@ def main():
 
     # league.write_output()
 
-    for i in range(12,20):
+    for i in range(10, 30):
         print(f"Number Allowed incorrect week fixture = {i}")
         schedule_2022 = Schedule(league, predefined_fixtures_url,
                                  allowed_run_time=100,

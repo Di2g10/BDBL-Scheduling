@@ -111,9 +111,9 @@ class Schedule:
                         else:
                             disallowed_fixture_slots.append(fs)
                     if len(allow_fixture_slots) > 0:
-                        print("Team =", t.name)
-                        print("Allowed_fixture_slots =", len(allow_fixture_slots))
-                        print("Weeks to be allocated in =", num_fixtures * 2)
+                        # print("Team =", t.name)
+                        # print("Allowed_fixture_slots =", len(allow_fixture_slots))
+                        # print("Weeks to be allocated in =", num_fixtures * 2)
                         self.model.Add(sum(self.selected_fixture[fs.identifier]
                                            for fs in disallowed_fixture_slots)
                                        <= 0)
@@ -141,8 +141,7 @@ class Schedule:
                 at_least_one_mixed_team = t1.league == "Mixed" or t2.league == "Mixed"
                 teams_share_players = (teams_different
                                        and (teams_adj_rank_same_league
-                                            or (teams_adj_rank_dif_league
-                                                and at_least_one_mixed_team
+                                            or (teams_same_rank_dif_league
                                                 )
                                             )
                                        )
@@ -182,7 +181,7 @@ class Schedule:
                                         self.selected_fixture[fcs2.identifier]])
                                    <= 1)
                     _rules_added += 1
-        print("Rules Added:", _rules_added)
+        # print("Rules Added:", _rules_added)
 
     def input_predefined_fixtures(self, _fixture_sheet_url):
         predefined_fixtures = pd.DataFrame(get_gsheet_data(_fixture_sheet_url,
