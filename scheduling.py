@@ -68,22 +68,12 @@ class Schedule:
     def create_constraint_one_fixture_per_week_per_team(self):
         for c in self.league.clubs:
             for t in c.teams:
-                _team_court_slots = []
+                _team_court_slots = defaultdict(list)
                 for fs in self.league.get_fixture_court_slots():
                     if fs.fixture.home_team == t or fs.fixture.away_team == t:
-                        _team_court_slots.append(fs)
+                        _team_court_slots[fs.get_week_number].append(fs)
 
-                _max_week_num = 0
-                for tcs in _team_court_slots:
-                    _week_number = tcs.get_week_number()
-                    if _week_number > _max_week_num:
-                        _max_week_num = _week_number
-
-                for i in range(_max_week_num):
-                    _team_slots_in_week = []
-                    for tcs in _team_court_slots:
-                        if i == tcs.get_week_number():
-                            _team_slots_in_week.append(tcs)
+                for _team_slots_in_week in _team_court_slots.values():
                     self.model.Add(sum(self.selected_fixture[_fixture_slot.identifier]
                                        for _fixture_slot in _team_slots_in_week)
                                    <= 1)
