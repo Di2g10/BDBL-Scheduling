@@ -8,6 +8,7 @@ import pandas as pd
 import re
 from Class_League import League
 from gsheets import get_gsheet_data, write_gsheet_output_data
+from collections import defaultdict
 
 
 def main():
@@ -15,11 +16,24 @@ def main():
 
 
 class Schedule:
-    def __init__(self, league: League, predefined_fixtures_url: str, allowed_run_time: int,
-                 num_allowed_incorrect_fixture_week: int = 0):
-        """
+    """
+    A scheduling model to schedule fixtures for a given league.
 
-        :param league: prepopulated class of a league structure
+    This model uses Google OR-Tools to optimize the scheduling of fixtures based on a set of constraints.
+    The class takes in a pre-populated league class and an optional URL to a spreadsheet of already committed match dates,
+    and returns a schedule of fixtures that meets the specified constraints.
+    """
+
+    def __init__(
+            self,
+            league: League,
+            allowed_run_time: int,
+            predefined_fixtures_url: str = None,
+            num_allowed_incorrect_fixture_week: int = 0):
+        """
+        Initialize a new scheduling model for a given league.
+
+        :param league: The prepared league to be scheduled
         :param predefined_fixtures_url: Url of spreadsheet containing already commited match dates
         :param allowed_run_time: Seconds the model will be left to run for before a sub optimial result will be returned
         :param num_allowed_incorrect_fixture_week: Fix the number of matches that can be scheduled on the incorrect week
@@ -42,30 +56,56 @@ class Schedule:
 
         # self.create_objective_fixture_correct_week()
         self.create_objective_maximise_fixtures_scheduled()
-
-        self.input_predefined_fixtures(predefined_fixtures_url)
+        if predefined_fixtures_url:
+            self.input_predefined_fixtures(predefined_fixtures_url)
 
         self.model_result = self.run_model(allowed_run_time=allowed_run_time)
 
     def create_model_variables(self):
+        """
+        Create the model variables for each fixture court slot.
+
+        For each fixture court slot in the league, this method creates a new Boolean variable
+        to represent the selection of the fixture for that slot. The identifier of the court slot
+        is used as the name of the variable.
+        """
         for _fixture_slot in self.league.get_fixture_court_slots():
             self.selected_fixture[_fixture_slot.identifier] = self.model.NewBoolVar(_fixture_slot.identifier)
 
     def create_constraint_one_slot_per_fixture(self):
+        """
+        Create a constraint to ensure that each fixture is assigned to one and only one court slot.
+
+        This method adds a constraint to the model such that the sum of the Boolean variables
+        representing the selection of the fixture court slots for a given fixture is less than or equal to 1.
+        This ensures that each fixture is scheduled to a single court slot.
+        """
         for _fixture in self.league.fixtures:
             self.model.Add(sum(self.selected_fixture[_fixture_slot.identifier]
                                for _fixture_slot in _fixture.fixture_court_slots)
                            <= 1)
 
     def create_constraint_one_fixture_per_slot(self):
+        """
+        Create a constraint to ensure that each court slot is assigned to one and only one fixture.
+
+        This method adds a constraint to the model such that the sum of the Boolean variables
+        representing the selection of the fixture court slots for a given court slot is less than or equal to 1.
+        This ensures that each court slot is occupied by a single fixture.
+        """
         for _club in self.league.clubs:
             for _court_slot in _club.court_slots:
                 self.model.Add(sum(self.selected_fixture[_fixture_slot.identifier]\
                                    for _fixture_slot in _court_slot.fixtures_court_slot)
                                <= 1)
-        pass
 
     def create_constraint_one_fixture_per_week_per_team(self):
+        """
+        This method creates a constraint that enforces that each team is scheduled for only one fixture in each week.
+
+        For each team, creates a list of all potential slots for that team either home or away.
+        Finds the maximum week number for this set of court slots, Uses this to loop through each potential
+        """
         for c in self.league.clubs:
             for t in c.teams:
                 _team_court_slots = defaultdict(list)
@@ -79,6 +119,14 @@ class Schedule:
                                    <= 1)
 
     def create_constraint_inter_club_matches_first(self):
+        """
+        Constrain the scheduling of inter-club fixtures to occur in the start of the season or post-Christmas.
+
+        For each time, Finds the number of inter club fixtures to be scheduled. Forces the number of inter club fixtures
+        in the same number of initial weeks to be equal.
+
+        :return:
+        """
         min_week_num = self.league.get_min_week_number()
         post_xmas_week_num = self.league.get_christmas_week_number()
 
