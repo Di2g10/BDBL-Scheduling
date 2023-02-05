@@ -2,7 +2,7 @@ from __future__ import print_function
 import pickle as pickle
 import sys
 from Class_League import League
-from Class_Schedule import Schedule
+from scheduling import Schedule
 
 
 def main():
