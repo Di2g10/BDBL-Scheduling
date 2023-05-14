@@ -13,9 +13,34 @@ class Date:
     pass
 
 
+class FixtureCourtSlot:
+    pass
+
 # League is the group of all clubs and teams entering for all Divisions for the year.
 class League:
     def __init__(self, _league_management_url):
+        """
+        This class represents a league and initializes its instance with the given _league_management_url.
+
+        Attributes:
+        name (str): Name of the league, initialized to "Something".
+        league_management_URL (str): URL of the league management sheet.
+        clubs (list): A list of all the clubs in the league.
+        dates (Dates): An instance of the Dates class that contains the dates of the league.
+        fixtures (list): A list of all the fixtures of the league.
+
+        Args:
+        _league_management_url (str): URL of the league management sheet.
+
+        Methods:
+        None.
+
+        Raises:
+        None.
+
+        Example:
+        league = League("https://example.com/league_management")
+        """
         self.name: str = "Something"
         self.league_management_URL = _league_management_url
         self.clubs = []
@@ -40,6 +65,22 @@ class League:
         # self.dates.calculate_dates_numbers()
 
     def _get_previous_league_position(self):
+        """
+        This private method retrieves the previous league position data for all the clubs in the league and sets their division accordingly.
+
+        Args:
+        self (League): An instance of the League class.
+
+        Returns:
+        None.
+
+        Raises:
+        ValueError: If a team doesn't have a specific rank from the previous season and is missing from the spreadsheet.
+
+        Example:
+        league = League("https://example.com/league_management")
+        league._get_previous_league_position()
+        """
         _raw_gsheet = get_gsheet_data(
             self.league_management_URL, "Previous League organisation"
         ).get_all_records()
@@ -76,24 +117,44 @@ class League:
                 )
 
     def get_club(self, _club_name_str):
+        """
+        This method returns the club with the given _club_name_str
+
+        :param _club_name_str: Name of the club to be returned
+        :return: the selected Club Instance
+        """
         for c in self.clubs:
             if c.name == _club_name_str:
                 return c
 
-    def write_output(self):
+    def write_output(self) -> None:
+        """
+        This method writes the output of the league to the console.
+        :return: None
+        """
         print("Dates:")
         for d in self.dates.dates:
             print(d.date)
         for c in self.clubs:
             c.write_output()
 
-    def get_teams(self):
+    def get_teams(self) -> List[Team]:
+        """
+        This method returns a list of all the teams in this league.
+
+        :return: List of Teams
+        """
         _team_list = []
         for c in self.clubs:
             _team_list.extend(c.teams)
         return _team_list
 
-    def write_teams_entered(self):
+    def write_teams_entered(self) -> None:
+        """
+        This method writes the teams entered to the league management sheet.
+
+        :return: none
+        """
         _league_list = []
         _club_list = []
         _rank_list = []
@@ -107,7 +168,12 @@ class League:
             _data_dict, "Teams Entered", self.league_management_URL
         )
 
-    def _generate_fixtures(self):
+    def _generate_fixtures(self) -> None:
+        """
+        This method generates the fixtures for the league.
+
+        :return: None
+        """
         for hm_team in self.get_teams():
             for aw_team in self.get_teams():
                 if (
@@ -118,13 +184,25 @@ class League:
                     fixture_i = Fixture(hm_team, aw_team)
                     self.fixtures.append(fixture_i)
 
-    def get_fixture_court_slots(self):
+    def get_fixture_court_slots(self) -> List[FixtureCourtSlot]:
+        """
+        This method returns a list of all the fixture court slots in the league.
+
+        :return: List of FixtureCourtSlot
+        """
         _fixtures_dates = []
         for _fixture in self.fixtures:
             _fixtures_dates.extend(_fixture.fixture_court_slots)
         return _fixtures_dates
 
-    def get_fixture_court_slots_for_teams_on_date(self, _teams: List, _date: Date):
+    def get_fixture_court_slots_for_teams_on_date(self, _teams: List[Team], _date: Date) -> List[FixtureCourtSlot]:
+        """
+        This method returns a list of all the fixture court slots in the league for the given teams on the given date.
+
+        :param _teams: list of teams to get fixture court slots for
+        :param _date:  date to get fixture court slots for
+        :return: List of fixture court slots for teams on date.
+        """
         result = []
         for _fixture in self.fixtures:
             fixture_team_match_a = _fixture.home_team in _teams
@@ -135,7 +213,15 @@ class League:
                         result.append(fcs)
         return result
 
-    def get_specific_fixture_court_slot(self, _home_team, _away_team, _date: Date):
+    def get_specific_fixture_court_slot(self, _home_team: Team, _away_team: Team, _date: Date) -> List[FixtureCourtSlot]:
+        """
+        This method returns a specific fixture court slot for the given home team, away team and date.
+
+        :param _home_team: selected home team
+        :param _away_team: selected away team
+        :param _date: selected date
+        :return: List of fixture court slots for between teams on date.
+        """
         result = []
         for _fixture in self.fixtures:
             if _fixture.home_team == _home_team and _fixture.away_team == _away_team:
@@ -144,20 +230,37 @@ class League:
                         result.append(fcs)
         return result
 
-    def get_date_obj_from_str(self, _date_str):
+    def get_date_obj_from_str(self, _date_str: str) -> Date:
+        """
+        This method returns the date object for the given date string.
+
+        :param _date_str: date string to get date object for
+        :return: Date Class for given date string
+        """
         _date = datetime.strptime(_date_str, "%d/%m/%Y")
         for d in self.dates.dates:
             if d.date == _date:
                 return d
         raise ValueError("Date not Found: " + _date_str)
 
-    def get_team_obj_from_str(self, _team_name_str):
+    def get_team_obj_from_str(self, _team_name_str: str) -> Team:
+        """
+        This method returns the team object for the given team name string.
+
+        :param _team_name_str: team name string to get team object for
+        :return: Team Class for given team name string
+        """
         for t in self.get_teams():
             if t.name == _team_name_str:
                 return t
         raise ValueError("Team Not Found: " + _team_name_str)
 
-    def check_league_data(self):
+    def check_league_data(self) -> None:
+        """
+        This method prints key league data.
+
+        :return:  None
+        """
         print("League name", self.name)
         print("URL", self.league_management_URL)
         print("No. Clubs", len(self.clubs))
@@ -165,8 +268,6 @@ class League:
         print()
         print("Date Weeks")
 
-        def d_sort(_date: Date):
-            return _date.date_delta_from_start
 
         for d in sorted(self.dates.dates, key=lambda _d: _d.date_delta_from_start):
             print(
@@ -179,15 +280,20 @@ class League:
             )
         print()
 
-    def get_min_week_number(self):
-        _list = (d.get_week_number() for d in self.dates.dates)
-        result = min(_list)
-        return result
+    def get_min_week_number(self) -> int:
+        """
+        method to get the minimum week number in the league
+
+        :return:
+        """
+        week_numbers = (d.get_week_number() for d in self.dates.dates)
+        return min(week_numbers)
 
     def get_christmas_week_number(self) -> int:
         """
-        Function to get the first schedulable week number after christmas
-        :return: 'the week number of the first date after christmas
+        Function to get the first schedulable week number after christmas.
+
+        :return: 'the week number of the first date after christmas.
         """
         dates = (d.date for d in self.dates.dates)
         min_date = min(dates)
@@ -325,7 +431,8 @@ class Date:
     def __repr__(self):
         return self.date_str
 
-    def get_week_number(self):
+    def get_week_number(self) -> int:
+        """Returns the week number of the date from the start of the league year."""
         return self.date_delta_from_start.days // 7
 
 
