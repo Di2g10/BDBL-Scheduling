@@ -15,7 +15,6 @@ class Date:
 
 # League is the group of all clubs and teams entering for all Divisions for the year.
 class League:
-
     def __init__(self, _league_management_url):
         self.name: str = "Something"
         self.league_management_URL = _league_management_url
@@ -24,8 +23,11 @@ class League:
         self.fixtures = []
 
         # Club Entry management
-        _club_entry_management = pd.DataFrame(get_gsheet_data(self.league_management_URL,
-                                                              "Club Entry Management").get_all_records())
+        _club_entry_management = pd.DataFrame(
+            get_gsheet_data(
+                self.league_management_URL, "Club Entry Management"
+            ).get_all_records()
+        )
         for club_url in _club_entry_management["Entry URL"]:
             if club_url:
                 c = Club(self, club_url)
@@ -38,9 +40,18 @@ class League:
         # self.dates.calculate_dates_numbers()
 
     def _get_previous_league_position(self):
-        _raw_gsheet = get_gsheet_data(self.league_management_URL, "Previous League organisation").get_all_records()
+        _raw_gsheet = get_gsheet_data(
+            self.league_management_URL, "Previous League organisation"
+        ).get_all_records()
         _previous_league_position_df = pd.DataFrame(_raw_gsheet)
-        _headings = ["League", "Club", "Team", "Previous League Position", "Teams Entered", "New Division"]
+        _headings = [
+            "League",
+            "Club",
+            "Team",
+            "Previous League Position",
+            "Teams Entered",
+            "New Division",
+        ]
         for index, row in _previous_league_position_df[_headings].iterrows():
             _club: Club = self.get_club(row["Club"])
             if _club:
@@ -49,8 +60,8 @@ class League:
                     try:
                         _team.division = int(row["New Division"])
                     except ValueError as err:
-                        print(f'Error Cause by {row.to_markdown()}')
-                        raise ValueError(f'Error Cause by {row}')
+                        print(f"Error Cause by {row.to_markdown()}")
+                        raise ValueError(f"Error Cause by {row}")
 
                 else:
                     print("Missing Team:", row["Club"], row["League"], row["Team"])
@@ -59,8 +70,10 @@ class League:
 
         for t in self.get_teams():
             if t.division == 0:
-                raise ValueError(f"Team {t.name} doesn't have specific rank from previous season. "
-                                 f"Missing from spreadsheet")
+                raise ValueError(
+                    f"Team {t.name} doesn't have specific rank from previous season. "
+                    f"Missing from spreadsheet"
+                )
 
     def get_club(self, _club_name_str):
         for c in self.clubs:
@@ -88,18 +101,20 @@ class League:
             _league_list.append(t.league)
             _club_list.append(t.club.name)
             _rank_list.append(t.rank)
-        _data = {"League": _league_list,
-                 "Club": _club_list,
-                 "Rank": _rank_list}
+        _data = {"League": _league_list, "Club": _club_list, "Rank": _rank_list}
         _data_dict = pd.DataFrame(_data)
-        write_gsheet_output_data(_data_dict, "Teams Entered", self.league_management_URL)
+        write_gsheet_output_data(
+            _data_dict, "Teams Entered", self.league_management_URL
+        )
 
     def _generate_fixtures(self):
         for hm_team in self.get_teams():
             for aw_team in self.get_teams():
-                if hm_team != aw_team \
-                   and hm_team.league == aw_team.league \
-                   and hm_team.division == aw_team.division:
+                if (
+                    hm_team != aw_team
+                    and hm_team.league == aw_team.league
+                    and hm_team.division == aw_team.division
+                ):
                     fixture_i = Fixture(hm_team, aw_team)
                     self.fixtures.append(fixture_i)
 
@@ -123,15 +138,14 @@ class League:
     def get_specific_fixture_court_slot(self, _home_team, _away_team, _date: Date):
         result = []
         for _fixture in self.fixtures:
-            if _fixture.home_team == _home_team and \
-                    _fixture.away_team == _away_team:
+            if _fixture.home_team == _home_team and _fixture.away_team == _away_team:
                 for fcs in _fixture.fixture_court_slots:
                     if fcs.court_slot.date == _date:
                         result.append(fcs)
         return result
 
     def get_date_obj_from_str(self, _date_str):
-        _date = datetime.strptime(_date_str, '%d/%m/%Y')
+        _date = datetime.strptime(_date_str, "%d/%m/%Y")
         for d in self.dates.dates:
             if d.date == _date:
                 return d
@@ -155,7 +169,14 @@ class League:
             return _date.date_delta_from_start
 
         for d in sorted(self.dates.dates, key=lambda _d: _d.date_delta_from_start):
-            print("Date:", d.date, "Delta:", d.date_delta_from_start.days, "Delta Weeks", d.date_delta_from_start.days // 7)
+            print(
+                "Date:",
+                d.date,
+                "Delta:",
+                d.date_delta_from_start.days,
+                "Delta Weeks",
+                d.date_delta_from_start.days // 7,
+            )
         print()
 
     def get_min_week_number(self):
@@ -171,7 +192,9 @@ class League:
         dates = (d.date for d in self.dates.dates)
         min_date = min(dates)
         second_year = min_date.year + 1
-        dates_in_second_year = (d.get_week_number() for d in self.dates.dates if d.date.year == second_year)
+        dates_in_second_year = (
+            d.get_week_number() for d in self.dates.dates if d.date.year == second_year
+        )
         result = min(dates_in_second_year)
         return result
 
@@ -187,33 +210,58 @@ class Club:
         self.court_slots = []
 
         # Club Info Sheet
-        _club_info = pd.DataFrame(get_gsheet_data(self.fileLocation, "0. Club Information").get_all_records())
+        _club_info = pd.DataFrame(
+            get_gsheet_data(self.fileLocation, "0. Club Information").get_all_records()
+        )
         self.name = _club_info["Club Name"][0]
         if self.name == "BH Pegasus":
             print("BH Pegagsus")
 
         # Teams Entering Sheet
-        _teams_entering = pd.DataFrame(get_gsheet_data(self.fileLocation, "1. Teams Entering").get_all_records())
-        _teams_columns = ["League Name", "Team Rank", "Availability Group", "Comments", "Home Nights Required"]
+        _teams_entering = pd.DataFrame(
+            get_gsheet_data(self.fileLocation, "1. Teams Entering").get_all_records()
+        )
+        _teams_columns = [
+            "League Name",
+            "Team Rank",
+            "Availability Group",
+            "Comments",
+            "Home Nights Required",
+        ]
         self.teams = []
 
         for index, row in _teams_entering[_teams_columns].iterrows():
             if row["League Name"]:
-                t = Team(self, row["League Name"], row["Team Rank"], row["Availability Group"])
+                t = Team(
+                    self,
+                    row["League Name"],
+                    row["Team Rank"],
+                    row["Availability Group"],
+                )
                 self.teams.append(t)
 
         # Get Club Availability
         self._get_club_availability()
 
     def _get_club_availability(self):
-        _club_availability = pd.DataFrame(get_gsheet_data(self.fileLocation, "2. Availability").get("C11:K223"))
+        _club_availability = pd.DataFrame(
+            get_gsheet_data(self.fileLocation, "2. Availability").get("C11:K223")
+        )
         _club_availability.columns = _club_availability.iloc[0]
         _club_availability = _club_availability[1:]
-        _date_columns = ["Date", "League Type", "Weekday", "Available", "No. Concurrent Matches"]
+        _date_columns = [
+            "Date",
+            "League Type",
+            "Weekday",
+            "Available",
+            "No. Concurrent Matches",
+        ]
         print(self.name)
         for index, row in _club_availability[_date_columns].iterrows():
             if row["Available"] != "Unavailable":
-                _date = self.league.dates.add_date(row["Date"], row["League Type"], row["Weekday"])
+                _date = self.league.dates.add_date(
+                    row["Date"], row["League Type"], row["Weekday"]
+                )
                 for _concurrent_matches in range(int(row["No. Concurrent Matches"])):
                     _court_slot = CourtSlot(_date, self, _concurrent_matches)
                     self.court_slots.append(_court_slot)
@@ -236,13 +284,25 @@ class Club:
     def get_fixture_court_slots(self, _include_home=True, _include_away=True):
         _fixtures = []
         for _team in self.teams:
-            _fixtures.extend(_team.get_fixture_court_slots(_include_home, _include_away))
+            _fixtures.extend(
+                _team.get_fixture_court_slots(_include_home, _include_away)
+            )
         return _fixtures
 
-    def get_all_fixtures(self, _is_intra_club=True, _is_inter_club=True, _include_home=True, _include_away=True):
+    def get_all_fixtures(
+        self,
+        _is_intra_club=True,
+        _is_inter_club=True,
+        _include_home=True,
+        _include_away=True,
+    ):
         result = []
         for t in self.teams:
-            result.extend(t.get_all_fixtures(_is_intra_club, _is_inter_club,_include_home,_include_away))
+            result.extend(
+                t.get_all_fixtures(
+                    _is_intra_club, _is_inter_club, _include_home, _include_away
+                )
+            )
         return result
 
     def __repr__(self):
@@ -253,7 +313,7 @@ class Club:
 class Date:
     def __init__(self, _date_str, _league_type, _weekday, _date_anchor):
         self.date_str: str = _date_str
-        self.date: datetime = datetime.strptime(_date_str, '%d-%b-%Y')
+        self.date: datetime = datetime.strptime(_date_str, "%d-%b-%Y")
         self.league_type = _league_type
         self.weekday = _weekday
         self.court_slots = []
@@ -277,7 +337,7 @@ class Dates:
         self.min_date = datetime(2021, 11, 1)
 
     def add_date(self, _date_str, _league_type, _weekday):
-        _date_tuple = (_date_str, )
+        _date_tuple = (_date_str,)
         for d in self.dates:
             if d.date_str == _date_str:
                 return d
@@ -309,7 +369,15 @@ class Team:
         self.name = self.club.name + " " + self.league + " " + self.rank
 
     def write_output(self):
-        print(" ", self.league, self.rank, "Group:", self.availability_group, "Division:", self.division)
+        print(
+            " ",
+            self.league,
+            self.rank,
+            "Group:",
+            self.availability_group,
+            "Division:",
+            self.division,
+        )
         # print("Home_Dates")
         # for d in self.home_dates:
         #     print(d.date.date, d.date.weekday)
@@ -323,7 +391,13 @@ class Team:
     def club_name(self):
         return self.club.name
 
-    def get_all_fixtures(self, _is_intra_club=True, _is_inter_club=True, _include_home = True, _include_away = True):
+    def get_all_fixtures(
+        self,
+        _is_intra_club=True,
+        _is_inter_club=True,
+        _include_home=True,
+        _include_away=True,
+    ):
         all_fixtures = []
         if _include_home:
             all_fixtures.extend(self.home_fixtures)
@@ -331,8 +405,9 @@ class Team:
             all_fixtures.extend(self.away_fixtures)
         result = []
         for f in all_fixtures:
-            if (f.is_intra_club and _is_intra_club)\
-                    or (not f.is_intra_club and _is_inter_club):
+            if (f.is_intra_club and _is_intra_club) or (
+                not f.is_intra_club and _is_inter_club
+            ):
                 result.append(f)
         return result
 
@@ -358,7 +433,13 @@ class CourtSlot:
         self.club = _club
         self.date.court_slots.append(self)
         self.concurrency_number = _concurrency_number
-        self.name = self.club.name + " " + self.date.date_str + " " + str(self.concurrency_number)
+        self.name = (
+            self.club.name
+            + " "
+            + self.date.date_str
+            + " "
+            + str(self.concurrency_number)
+        )
         self.fixtures_court_slot = []
 
     def add_team(self, _team: Team):
@@ -367,9 +448,9 @@ class CourtSlot:
                 self.teams.append(_team)
                 _team.court_slots.append(self)
             else:
-                raise ValueError('Attempted to append team from different club')
+                raise ValueError("Attempted to append team from different club")
         else:
-            raise ValueError('Team already linked with court slot')
+            raise ValueError("Team already linked with court slot")
 
     def is_week_team_type_match(self):
         if self.date.league_type == "Open/Ladies":
@@ -402,7 +483,9 @@ class Fixture:
         self._generate_dates()
 
     def is_new_fixture(self):
-        result: bool = self.home_team in [hf.away_team for hf in self.home_team.home_fixtures]
+        result: bool = self.home_team in [
+            hf.away_team for hf in self.home_team.home_fixtures
+        ]
         return not result
 
     def print(self):
@@ -426,13 +509,19 @@ class FixtureCourtSlot:
         self.court_slot = _court_slot
         self.is_scheduled = 0
 
-        self.friendly_name = self.fixture.name + " - " \
-                             + self.court_slot.date.date_str \
-                             + " - No:" + str(self.court_slot.concurrency_number)
+        self.friendly_name = (
+            self.fixture.name
+            + " - "
+            + self.court_slot.date.date_str
+            + " - No:"
+            + str(self.court_slot.concurrency_number)
+        )
 
-        self.identifier = (self.fixture.name +\
-                           self.court_slot.date.date_str +\
-                           str(self.court_slot.concurrency_number)).replace(' ','_')
+        self.identifier = (
+            self.fixture.name
+            + self.court_slot.date.date_str
+            + str(self.court_slot.concurrency_number)
+        ).replace(" ", "_")
 
         self.court_slot.fixtures_court_slot.append(self)
 
@@ -449,17 +538,18 @@ class FixtureCourtSlot:
         return self.court_slot.date.get_week_number()
 
     def as_dict(self):
-        result = {'Home Team': self.fixture.home_team.name,
-                  'Away Team': self.fixture.away_team.name,
-                  'Date': self.court_slot.date.date_str,
-                  'Court No.': self.court_slot.concurrency_number,
-                  'is_scheduled': self.is_scheduled,
-                  'league': self.fixture.home_team.league,
-                  'Division': self.fixture.home_team.division,
-                  'Home Club': self.fixture.home_team.club.name,
-                  'Away Club': self.fixture.away_team.club.name,
-                  'Is Correct Week': self.is_correct_week()
-                  }
+        result = {
+            "Home Team": self.fixture.home_team.name,
+            "Away Team": self.fixture.away_team.name,
+            "Date": self.court_slot.date.date_str,
+            "Court No.": self.court_slot.concurrency_number,
+            "is_scheduled": self.is_scheduled,
+            "league": self.fixture.home_team.league,
+            "Division": self.fixture.home_team.division,
+            "Home Club": self.fixture.home_team.club.name,
+            "Away Club": self.fixture.away_team.club.name,
+            "Is Correct Week": self.is_correct_week(),
+        }
         return result
 
     def __repr__(self):
@@ -467,11 +557,13 @@ class FixtureCourtSlot:
 
 
 def main():
-    test1 = League("https://docs.google.com/spreadsheets/d/1Mi-fWF63mw8Sdcb_lzHHTTvPqCp0VcJyZaqD5cm6D8U")
+    test1 = League(
+        "https://docs.google.com/spreadsheets/d/1Mi-fWF63mw8Sdcb_lzHHTTvPqCp0VcJyZaqD5cm6D8U"
+    )
     test1.write_teams_entered()
 
     test1.write_output()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
