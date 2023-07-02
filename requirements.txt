@@ -32,3 +32,7 @@ six==1.15.0
 tabulate==0.8.10
 uritemplate==3.0.1
 urllib3==1.26.4
+
+pre-commit
+black
+ruff
