@@ -1,28 +1,42 @@
+"""Contains the League class and its methods."""
+
 from __future__ import print_function
-from typing import List, Tuple, Dict, Any, Union
-from datetime import datetime, timedelta, date
+
+from datetime import datetime
+from typing import List
+
 import pandas as pd
+
 from gsheets import get_gsheet_data, write_gsheet_output_data
 
 
 class Team:
+    """Represents a team and initializes its instance with the given _team_name and _division."""
+
     pass
 
 
 class Date:
+    """Represents a date and initializes its instance with the given _date_number and _date."""
+
     pass
 
 
 class FixtureCourtSlot:
+    """Represents a fixture court slot."""
+
     pass
+
 
 # League is the group of all clubs and teams entering for all Divisions for the year.
 class League:
+    """Represents a league and initializes its instance with the given _league_management_url."""
+
     def __init__(self, _league_management_url):
-        """
-        This class represents a league and initializes its instance with the given _league_management_url.
+        """Initialize the class the given _league_management_url.
 
         Attributes:
+        ----------
         name (str): Name of the league, initialized to "Something".
         league_management_URL (str): URL of the league management sheet.
         clubs (list): A list of all the clubs in the league.
@@ -30,15 +44,19 @@ class League:
         fixtures (list): A list of all the fixtures of the league.
 
         Args:
+        ----
         _league_management_url (str): URL of the league management sheet.
 
         Methods:
+        -------
         None.
 
         Raises:
+        ------
         None.
 
         Example:
+        -------
         league = League("https://example.com/league_management")
         """
         self.name: str = "Something"
@@ -49,9 +67,7 @@ class League:
 
         # Club Entry management
         _club_entry_management = pd.DataFrame(
-            get_gsheet_data(
-                self.league_management_URL, "Club Entry Management"
-            ).get_all_records()
+            get_gsheet_data(self.league_management_URL, "Club Entry Management").get_all_records()
         )
         for club_url in _club_entry_management["Entry URL"]:
             if club_url:
@@ -65,19 +81,23 @@ class League:
         # self.dates.calculate_dates_numbers()
 
     def _get_previous_league_position(self):
-        """
-        This private method retrieves the previous league position data for all the clubs in the league and sets their division accordingly.
+        """Retrieve the previous league position data for all the clubs and sets their division.
 
         Args:
+        ----
         self (League): An instance of the League class.
 
         Returns:
+        -------
         None.
 
         Raises:
-        ValueError: If a team doesn't have a specific rank from the previous season and is missing from the spreadsheet.
+        ------
+        ValueError: If a team doesn't have a specific rank from the previous season
+        and is missing from the spreadsheet.
 
         Example:
+        -------
         league = League("https://example.com/league_management")
         league._get_previous_league_position()
         """
@@ -100,7 +120,7 @@ class League:
                 if _team:
                     try:
                         _team.division = int(row["New Division"])
-                    except ValueError as err:
+                    except ValueError:
                         print(f"Error Cause by {row.to_markdown()}")
                         raise ValueError(f"Error Cause by {row}")
 
@@ -117,8 +137,7 @@ class League:
                 )
 
     def get_club(self, _club_name_str):
-        """
-        This method returns the club with the given _club_name_str
+        """Get the club with the given _club_name_str.
 
         :param _club_name_str: Name of the club to be returned
         :return: the selected Club Instance
@@ -126,11 +145,12 @@ class League:
         for c in self.clubs:
             if c.name == _club_name_str:
                 return c
+        return None
 
     def write_output(self) -> None:
-        """
-        This method writes the output of the league to the console.
-        :return: None
+        """Write the output of the league to the console.
+
+        :return: None.
         """
         print("Dates:")
         for d in self.dates.dates:
@@ -139,8 +159,7 @@ class League:
             c.write_output()
 
     def get_teams(self) -> List[Team]:
-        """
-        This method returns a list of all the teams in this league.
+        """Return a list of all the teams in this league.
 
         :return: List of Teams
         """
@@ -150,8 +169,7 @@ class League:
         return _team_list
 
     def write_teams_entered(self) -> None:
-        """
-        This method writes the teams entered to the league management sheet.
+        """Write the teams entered to the league management sheet.
 
         :return: none
         """
@@ -164,13 +182,10 @@ class League:
             _rank_list.append(t.rank)
         _data = {"League": _league_list, "Club": _club_list, "Rank": _rank_list}
         _data_dict = pd.DataFrame(_data)
-        write_gsheet_output_data(
-            _data_dict, "Teams Entered", self.league_management_URL
-        )
+        write_gsheet_output_data(_data_dict, "Teams Entered", self.league_management_URL)
 
     def _generate_fixtures(self) -> None:
-        """
-        This method generates the fixtures for the league.
+        """Generate the fixtures for the league.
 
         :return: None
         """
@@ -185,8 +200,7 @@ class League:
                     self.fixtures.append(fixture_i)
 
     def get_fixture_court_slots(self) -> List[FixtureCourtSlot]:
-        """
-        This method returns a list of all the fixture court slots in the league.
+        """Return a list of all the fixture court slots in the league.
 
         :return: List of FixtureCourtSlot
         """
@@ -195,9 +209,10 @@ class League:
             _fixtures_dates.extend(_fixture.fixture_court_slots)
         return _fixtures_dates
 
-    def get_fixture_court_slots_for_teams_on_date(self, _teams: List[Team], _date: Date) -> List[FixtureCourtSlot]:
-        """
-        This method returns a list of all the fixture court slots in the league for the given teams on the given date.
+    def get_fixture_court_slots_for_teams_on_date(
+        self, _teams: List[Team], _date: Date
+    ) -> List[FixtureCourtSlot]:
+        """Return all the fixture court slots in the league for the given teams on the given date.
 
         :param _teams: list of teams to get fixture court slots for
         :param _date:  date to get fixture court slots for
@@ -213,9 +228,10 @@ class League:
                         result.append(fcs)
         return result
 
-    def get_specific_fixture_court_slot(self, _home_team: Team, _away_team: Team, _date: Date) -> List[FixtureCourtSlot]:
-        """
-        This method returns a specific fixture court slot for the given home team, away team and date.
+    def get_specific_fixture_court_slot(
+        self, _home_team: Team, _away_team: Team, _date: Date
+    ) -> List[FixtureCourtSlot]:
+        """Return a specific fixture court slot for the given home team, away team and date.
 
         :param _home_team: selected home team
         :param _away_team: selected away team
@@ -231,8 +247,7 @@ class League:
         return result
 
     def get_date_obj_from_str(self, _date_str: str) -> Date:
-        """
-        This method returns the date object for the given date string.
+        """Return the date object for the given date string.
 
         :param _date_str: date string to get date object for
         :return: Date Class for given date string
@@ -244,8 +259,7 @@ class League:
         raise ValueError("Date not Found: " + _date_str)
 
     def get_team_obj_from_str(self, _team_name_str: str) -> Team:
-        """
-        This method returns the team object for the given team name string.
+        """Return the team object for the given team name string.
 
         :param _team_name_str: team name string to get team object for
         :return: Team Class for given team name string
@@ -256,8 +270,7 @@ class League:
         raise ValueError("Team Not Found: " + _team_name_str)
 
     def check_league_data(self) -> None:
-        """
-        This method prints key league data.
+        """Print key league data.
 
         :return:  None
         """
@@ -267,7 +280,6 @@ class League:
         print("No. fixtures", len(self.fixtures))
         print()
         print("Date Weeks")
-
 
         for d in sorted(self.dates.dates, key=lambda _d: _d.date_delta_from_start):
             print(
@@ -281,8 +293,7 @@ class League:
         print()
 
     def get_min_week_number(self) -> int:
-        """
-        method to get the minimum week number in the league
+        """Get the minimum week number in the league.
 
         :return:
         """
@@ -290,10 +301,9 @@ class League:
         return min(week_numbers)
 
     def get_christmas_week_number(self) -> int:
-        """
-        Function to get the first schedulable week number after christmas.
+        """Get the first schedulable week number after Christmas.
 
-        :return: 'the week number of the first date after christmas.
+        :return: the week number of the first date after Christmas.
         """
         dates = (d.date for d in self.dates.dates)
         min_date = min(dates)
@@ -301,16 +311,23 @@ class League:
         dates_in_second_year = (
             d.get_week_number() for d in self.dates.dates if d.date.year == second_year
         )
-        result = min(dates_in_second_year)
-        return result
+        return min(dates_in_second_year)
 
     def __repr__(self):
+        """Return a string representation of the League Class."""
         return self.name
 
 
-# Clubs are a group of teams entering that may share players and play at the same venue and share courts.
 class Club:
+    """Club Class.
+
+    Clubs are a group of teams entering that may share players
+    and play at the same venue
+    and share courts.
+    """
+
     def __init__(self, _league: League, _file_location):
+        """Initialise the Club Class."""
         self.fileLocation = _file_location
         self.league = _league
         self.court_slots = []
@@ -365,9 +382,7 @@ class Club:
         print(self.name)
         for index, row in _club_availability[_date_columns].iterrows():
             if row["Available"] != "Unavailable":
-                _date = self.league.dates.add_date(
-                    row["Date"], row["League Type"], row["Weekday"]
-                )
+                _date = self.league.dates.add_date(row["Date"], row["League Type"], row["Weekday"])
                 for _concurrent_matches in range(int(row["No. Concurrent Matches"])):
                     _court_slot = CourtSlot(_date, self, _concurrent_matches)
                     self.court_slots.append(_court_slot)
@@ -376,6 +391,7 @@ class Club:
                             _court_slot.add_team(_team)
 
     def write_output(self):
+        """Write output for the club."""
         print(self.name)
         # print(self.availability_weeks)
         # print(self.availability_detail)
@@ -383,16 +399,17 @@ class Club:
             t.write_output()
 
     def get_team(self, _league, _team_rank):
+        """Get the team object for the given league and team rank."""
         for t in self.teams:
             if t.league == _league and t.rank == _team_rank:
                 return t
+        return None
 
     def get_fixture_court_slots(self, _include_home=True, _include_away=True):
+        """Get all fixture court slots for the club."""
         _fixtures = []
         for _team in self.teams:
-            _fixtures.extend(
-                _team.get_fixture_court_slots(_include_home, _include_away)
-            )
+            _fixtures.extend(_team.get_fixture_court_slots(_include_home, _include_away))
         return _fixtures
 
     def get_all_fixtures(
@@ -402,22 +419,25 @@ class Club:
         _include_home=True,
         _include_away=True,
     ):
+        """Get all fixtures for the club."""
         result = []
         for t in self.teams:
             result.extend(
-                t.get_all_fixtures(
-                    _is_intra_club, _is_inter_club, _include_home, _include_away
-                )
+                t.get_all_fixtures(_is_intra_club, _is_inter_club, _include_home, _include_away)
             )
         return result
 
     def __repr__(self):
+        """Return a string representation of the club."""
         return self.name
 
 
 # dates are specific days in the league year. There should be at most one instance per day.
 class Date:
+    """Class to represent a date in the league."""
+
     def __init__(self, _date_str, _league_type, _weekday, _date_anchor):
+        """Initialise an instance of the Date class."""
         self.date_str: str = _date_str
         self.date: datetime = datetime.strptime(_date_str, "%d-%b-%Y")
         self.league_type = _league_type
@@ -429,21 +449,26 @@ class Date:
     # def calculate_date_numbers(self, min_date: datetime):
     #     self.date_delta_from_start = self.date - min_date
     def __repr__(self):
+        """Return the date string."""
         return self.date_str
 
     def get_week_number(self) -> int:
-        """Returns the week number of the date from the start of the league year."""
+        """Return the week number of the date from the start of the league year."""
         return self.date_delta_from_start.days // 7
 
 
 # Collection of all dates available to the league. Handles the uniques of the Date object.
 class Dates:
+    """Collection of all dates available to the league. Handles the uniques of the Date object."""
+
     def __init__(self):
+        """Initialise the collection of dates."""
         self.dates = []
         self.date_values = ()
         self.min_date = datetime(2021, 11, 1)
 
     def add_date(self, _date_str, _league_type, _weekday):
+        """Add a date to the collection if it does not already exist. Returns the date object."""
         _date_tuple = (_date_str,)
         for d in self.dates:
             if d.date_str == _date_str:
@@ -454,17 +479,25 @@ class Dates:
         return _date_obj
 
     def _update_min_date(self, _date: Date):
+        """Update the minimum date in the collection."""
         if _date.date < self.min_date:
             self.min_date = _date.date
 
     def calculate_dates_numbers(self):
+        """Calculate the date numbers for each date in the collection."""
         for d in self.dates:
             d.calculate_date_numbers(self.min_date)
 
 
 # An entry into a specific division of a specific league type.
 class Team:
+    """A team is a club in a league in a division.
+
+    It has a rank within the division and a home night.
+    """
+
     def __init__(self, _club: Club, _league_name, _rank, _availability_group):
+        """Initialise the team."""
         self.club = _club
         self.league = _league_name
         self.rank = _rank
@@ -476,6 +509,7 @@ class Team:
         self.name = self.club.name + " " + self.league + " " + self.rank
 
     def write_output(self):
+        """Write the team's fixtures to the console."""
         print(
             " ",
             self.league,
@@ -496,6 +530,7 @@ class Team:
             print("   ", f.print())
 
     def club_name(self):
+        """Return the name of the club."""
         return self.club.name
 
     def get_all_fixtures(
@@ -505,6 +540,7 @@ class Team:
         _include_home=True,
         _include_away=True,
     ):
+        """Return a list of all fixtures for the team."""
         all_fixtures = []
         if _include_home:
             all_fixtures.extend(self.home_fixtures)
@@ -512,13 +548,12 @@ class Team:
             all_fixtures.extend(self.away_fixtures)
         result = []
         for f in all_fixtures:
-            if (f.is_intra_club and _is_intra_club) or (
-                not f.is_intra_club and _is_inter_club
-            ):
+            if (f.is_intra_club and _is_intra_club) or (not f.is_intra_club and _is_inter_club):
                 result.append(f)
         return result
 
     def get_fixture_court_slots(self, _include_home=True, _include_away=True):
+        """Return a list of all court slots for the teams fixtures."""
         _fixtures_slots = []
         if _include_home:
             for _hf in self.home_fixtures:
@@ -529,27 +564,26 @@ class Team:
         return _fixtures_slots
 
     def __repr__(self):
+        """Return the name of the team."""
         return self.name
 
 
 # courts available to a specific club on a specific date for a teams home fixture.
 class CourtSlot:
+    """A court slot is a specific court at a specific club on a specific date."""
+
     def __init__(self, _date: Date, _club: Club, _concurrency_number):
+        """Create a court slot for a specific date and club."""
         self.date = _date
         self.teams = []
         self.club = _club
         self.date.court_slots.append(self)
         self.concurrency_number = _concurrency_number
-        self.name = (
-            self.club.name
-            + " "
-            + self.date.date_str
-            + " "
-            + str(self.concurrency_number)
-        )
+        self.name = self.club.name + " " + self.date.date_str + " " + str(self.concurrency_number)
         self.fixtures_court_slot = []
 
     def add_team(self, _team: Team):
+        """Add a team to the court slot."""
         if _team not in self.teams:
             if _team.club == self.club:
                 self.teams.append(_team)
@@ -560,21 +594,26 @@ class CourtSlot:
             raise ValueError("Team already linked with court slot")
 
     def is_week_team_type_match(self):
+        """Return true if the court slot is for the correct team type for the date."""
         if self.date.league_type == "Open/Ladies":
             return self.team.league in ["Open", "Ladies 4"]
-        else:
-            return self.team.league == "Mixed"
+        return self.team.league == "Mixed"
 
     def write_output(self):
+        """Print the court slot name."""
         print(self.name)
 
     def __repr__(self):
+        """Return the string representation of the court slot."""
         return self.name
 
 
 # A match to be played between 2 teams.
 class Fixture:
+    """A match to be played between 2 teams."""
+
     def __init__(self, _home_team: Team, _away_team: Team):
+        """Create a fixture between 2 teams."""
         self.home_team: Team = _home_team
         self.away_team: Team = _away_team
 
@@ -590,12 +629,12 @@ class Fixture:
         self._generate_dates()
 
     def is_new_fixture(self):
-        result: bool = self.home_team in [
-            hf.away_team for hf in self.home_team.home_fixtures
-        ]
+        """Check if the fixture is new."""
+        result: bool = self.home_team in [hf.away_team for hf in self.home_team.home_fixtures]
         return not result
 
     def print(self):
+        """Print the fixture and its fixture court slots."""
         print(self.name)
         for fcs in self.fixture_court_slots:
             print("    ", fcs.friendly_name)
@@ -606,12 +645,16 @@ class Fixture:
             self.fixture_court_slots.append(fd)
 
     def __repr__(self):
+        """Return the string representation of the fixture."""
         return self.name
 
 
 # A possible slot available for a fixture
 class FixtureCourtSlot:
+    """A possible slot available for a fixture."""
+
     def __init__(self, _fixture: Fixture, _court_slot: CourtSlot):
+        """Create a fixture court slot."""
         self.fixture = _fixture
         self.court_slot = _court_slot
         self.is_scheduled = 0
@@ -633,19 +676,21 @@ class FixtureCourtSlot:
         self.court_slot.fixtures_court_slot.append(self)
 
     def is_correct_week(self):
+        """Return true if the fixture is in the correct week for the court slot."""
         date_is_mixed = self.court_slot.date.league_type == "Mixed"
         match_is_mixed = self.fixture.home_team.league == "Mixed"
-        result = date_is_mixed == match_is_mixed
-        return result
+        return date_is_mixed == match_is_mixed
 
         # print("Fixture Date Name")
         # print(self.name)
 
     def get_week_number(self):
+        """Return the week number of the fixture."""
         return self.court_slot.date.get_week_number()
 
     def as_dict(self):
-        result = {
+        """Return a dictionary representation of the fixture."""
+        return {
             "Home Team": self.fixture.home_team.name,
             "Away Team": self.fixture.away_team.name,
             "Date": self.court_slot.date.date_str,
@@ -657,13 +702,14 @@ class FixtureCourtSlot:
             "Away Club": self.fixture.away_team.club.name,
             "Is Correct Week": self.is_correct_week(),
         }
-        return result
 
     def __repr__(self):
+        """Return a string representation of the fixture."""
         return self.identifier
 
 
 def main():
+    """Run to test the league class."""
     test1 = League(
         "https://docs.google.com/spreadsheets/d/1Mi-fWF63mw8Sdcb_lzHHTTvPqCp0VcJyZaqD5cm6D8U"
     )
