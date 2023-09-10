@@ -36,3 +36,5 @@ urllib3==1.26.4
 pre-commit
 black
 ruff
+matplotlib
+mplcursors
