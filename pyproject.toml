@@ -3,11 +3,11 @@
 requires-python = ">=3.9"
 
 [tool.black]
-line-length = 100
+line-length = 120
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["E", "F", "I", "N","D","PD","RUF","PL","NPY","PTH","RET","SIM"]
-ignore = ["D213","D203","PD901","PD011"]
+ignore = ["D213","D203","PD901","PD011","PTH123"]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
@@ -40,7 +40,7 @@ exclude = [
 per-file-ignores = {"__init__.py" = ["D"]}
 
 # Same as Black.
-line-length = 100
+line-length = 120
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
