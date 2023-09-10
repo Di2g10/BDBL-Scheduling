@@ -1,13 +1,15 @@
+"""Module contains functions to read and write data to google sheets."""
+
+import time
+from datetime import datetime
+from pathlib import Path
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from pathlib import Path
-from datetime import datetime, timedelta, date
-import time
 
 
 def get_gsheet_data(_file_location, _sheet_name):
-    """Downloads data from a google sheets spreadsheet"""
-
+    """Download data from a Google sheets spreadsheet."""
     print(datetime.now())
     time.sleep(3)
     _scope = Path("client_secret.json")
@@ -19,6 +21,7 @@ def get_gsheet_data(_file_location, _sheet_name):
 
 
 def write_gsheet_output_data(_output_data, _sheet_name, _file_location):
+    """Write data to a Google sheets spreadsheet."""
     print(datetime.now())
     time.sleep(3)
     _scope = Path("client_secret.json")
@@ -37,5 +40,4 @@ def write_gsheet_output_data(_output_data, _sheet_name, _file_location):
         print("sheet created Called ", _output_worksheet)
 
     _output_worksheet.clear()
-    _output_worksheet.update([_output_data.columns.values.tolist()] + _output_data.values.tolist())
-
+    _output_worksheet.update([_output_data.columns.values.tolist(), *_output_data.values.tolist()])
