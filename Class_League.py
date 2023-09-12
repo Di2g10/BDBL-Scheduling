@@ -101,9 +101,7 @@ class League:
         league = League("https://example.com/league_management")
         league._get_previous_league_position()
         """
-        _raw_gsheet = get_gsheet_data(
-            self.league_management_URL, "Previous League organisation"
-        ).get_all_records()
+        _raw_gsheet = get_gsheet_data(self.league_management_URL, "Previous League organisation").get_all_records()
         _previous_league_position_df = pd.DataFrame(_raw_gsheet)
         _headings = [
             "League",
@@ -132,8 +130,7 @@ class League:
         for t in self.get_teams():
             if t.division == 0:
                 raise ValueError(
-                    f"Team {t.name} doesn't have specific rank from previous season. "
-                    f"Missing from spreadsheet"
+                    f"Team {t.name} doesn't have specific rank from previous season. " f"Missing from spreadsheet"
                 )
 
     def get_club(self, _club_name_str):
@@ -191,11 +188,7 @@ class League:
         """
         for hm_team in self.get_teams():
             for aw_team in self.get_teams():
-                if (
-                    hm_team != aw_team
-                    and hm_team.league == aw_team.league
-                    and hm_team.division == aw_team.division
-                ):
+                if hm_team != aw_team and hm_team.league == aw_team.league and hm_team.division == aw_team.division:
                     fixture_i = Fixture(hm_team, aw_team)
                     self.fixtures.append(fixture_i)
 
@@ -209,9 +202,7 @@ class League:
             _fixtures_dates.extend(_fixture.fixture_court_slots)
         return _fixtures_dates
 
-    def get_fixture_court_slots_for_teams_on_date(
-        self, _teams: List[Team], _date: Date
-    ) -> List[FixtureCourtSlot]:
+    def get_fixture_court_slots_for_teams_on_date(self, _teams: List[Team], _date: Date) -> List[FixtureCourtSlot]:
         """Return all the fixture court slots in the league for the given teams on the given date.
 
         :param _teams: list of teams to get fixture court slots for
@@ -308,9 +299,7 @@ class League:
         dates = (d.date for d in self.dates.dates)
         min_date = min(dates)
         second_year = min_date.year + 1
-        dates_in_second_year = (
-            d.get_week_number() for d in self.dates.dates if d.date.year == second_year
-        )
+        dates_in_second_year = (d.get_week_number() for d in self.dates.dates if d.date.year == second_year)
         return min(dates_in_second_year)
 
     def __repr__(self):
@@ -333,17 +322,11 @@ class Club:
         self.court_slots = []
 
         # Club Info Sheet
-        _club_info = pd.DataFrame(
-            get_gsheet_data(self.fileLocation, "0. Club Information").get_all_records()
-        )
+        _club_info = pd.DataFrame(get_gsheet_data(self.fileLocation, "0. Club Information").get_all_records())
         self.name = _club_info["Club Name"][0]
-        if self.name == "BH Pegasus":
-            print("BH Pegagsus")
 
         # Teams Entering Sheet
-        _teams_entering = pd.DataFrame(
-            get_gsheet_data(self.fileLocation, "1. Teams Entering").get_all_records()
-        )
+        _teams_entering = pd.DataFrame(get_gsheet_data(self.fileLocation, "1. Teams Entering").get_all_records())
         _teams_columns = [
             "League Name",
             "Team Rank",
@@ -367,24 +350,16 @@ class Club:
         self._get_club_availability()
 
     def _get_club_availability(self):
-        _club_availability = pd.DataFrame(
-            get_gsheet_data(self.fileLocation, "2. Availability").get("C11:K223")
-        )
+        _club_availability = pd.DataFrame(get_gsheet_data(self.fileLocation, "2. Availability").get("C11:L300"))
         _club_availability.columns = _club_availability.iloc[0]
         _club_availability = _club_availability[1:]
-        _date_columns = [
-            "Date",
-            "League Type",
-            "Weekday",
-            "Available",
-            "No. Concurrent Matches",
-        ]
         print(self.name)
-        for index, row in _club_availability[_date_columns].iterrows():
+        for index, row in _club_availability.iterrows():
             if row["Available"] != "Unavailable":
                 _date = self.league.dates.add_date(row["Date"], row["League Type"], row["Weekday"])
+                priority = row.get("Priority", False)
                 for _concurrent_matches in range(int(row["No. Concurrent Matches"])):
-                    _court_slot = CourtSlot(_date, self, _concurrent_matches)
+                    _court_slot = CourtSlot(_date, self, _concurrent_matches, priority)
                     self.court_slots.append(_court_slot)
                     for _team in self.teams:
                         if _team.availability_group == row["Available"]:
@@ -422,9 +397,7 @@ class Club:
         """Get all fixtures for the club."""
         result = []
         for t in self.teams:
-            result.extend(
-                t.get_all_fixtures(_is_intra_club, _is_inter_club, _include_home, _include_away)
-            )
+            result.extend(t.get_all_fixtures(_is_intra_club, _is_inter_club, _include_home, _include_away))
         return result
 
     def __repr__(self):
@@ -446,8 +419,6 @@ class Date:
         # Anchor date could be wrong for early dates added if not added in order
         self.date_delta_from_start = self.date - _date_anchor
 
-    # def calculate_date_numbers(self, min_date: datetime):
-    #     self.date_delta_from_start = self.date - min_date
     def __repr__(self):
         """Return the date string."""
         return self.date_str
@@ -572,7 +543,7 @@ class Team:
 class CourtSlot:
     """A court slot is a specific court at a specific club on a specific date."""
 
-    def __init__(self, _date: Date, _club: Club, _concurrency_number):
+    def __init__(self, _date: Date, _club: Club, _concurrency_number: int, priority: bool):
         """Create a court slot for a specific date and club."""
         self.date = _date
         self.teams = []
@@ -581,6 +552,7 @@ class CourtSlot:
         self.concurrency_number = _concurrency_number
         self.name = self.club.name + " " + self.date.date_str + " " + str(self.concurrency_number)
         self.fixtures_court_slot = []
+        self.priority = priority
 
     def add_team(self, _team: Team):
         """Add a team to the court slot."""
@@ -668,9 +640,7 @@ class FixtureCourtSlot:
         )
 
         self.identifier = (
-            self.fixture.name
-            + self.court_slot.date.date_str
-            + str(self.court_slot.concurrency_number)
+            self.fixture.name + self.court_slot.date.date_str + str(self.court_slot.concurrency_number)
         ).replace(" ", "_")
 
         self.court_slot.fixtures_court_slot.append(self)
@@ -710,9 +680,7 @@ class FixtureCourtSlot:
 
 def main():
     """Run to test the league class."""
-    test1 = League(
-        "https://docs.google.com/spreadsheets/d/1Mi-fWF63mw8Sdcb_lzHHTTvPqCp0VcJyZaqD5cm6D8U"
-    )
+    test1 = League("https://docs.google.com/spreadsheets/d/1Mi-fWF63mw8Sdcb_lzHHTTvPqCp0VcJyZaqD5cm6D8U")
     test1.write_teams_entered()
 
     test1.write_output()

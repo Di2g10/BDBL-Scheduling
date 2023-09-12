@@ -22,16 +22,40 @@ def main():
 
     # league.write_output()
 
+    min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
+    min_unprioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
+
+    print(f"Min Incorrect Weeks = {min_incorrect_weeks}")
+    print(f"max prioritised Slots = {min_unprioritised_slots}")
+
+
+def _get_min_incorrect_weeks(league, predefined_fixtures_url):
     for i in range(0, 30):
         print(f"Number Allowed incorrect week fixture = {i}")
+        schedule = Schedule(
+            league=league,
+            predefined_fixtures_url=predefined_fixtures_url,
+            allowed_run_time=1000,
+            num_allowed_incorrect_fixture_week=i,
+        )
+        if schedule.model_result != "INFEASIBLE":
+            return i
+    return None
+
+
+def _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks):
+    for i in range(0, 30):
+        print(f"Number Allowed Unprioritised Slots = {i}")
         schedule_2023 = Schedule(
             league=league,
             predefined_fixtures_url=predefined_fixtures_url,
-            allowed_run_time=100,
-            num_allowed_incorrect_fixture_week=i,
+            allowed_run_time=1000,
+            num_allowed_incorrect_fixture_week=min_incorrect_weeks,
+            num_forced_prioritised_nights=i,
         )
-        if schedule_2023.model_result != "INFEASIBLE":
-            return
+        if schedule_2023.model_result == "INFEASIBLE":
+            return i - 1
+    return None
 
 
 def reload_league_data_from_gsheet(_load_from_gsheets: bool, _league_management_url: str) -> League:
