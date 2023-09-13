@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
 import pandas as pd
@@ -452,7 +452,9 @@ class Dates:
     def _update_min_date(self, _date: Date):
         """Update the minimum date in the collection."""
         if _date.date < self.min_date:
-            self.min_date = _date.date
+            # round min date down to the start of the week
+            self.min_date = _date.date - timedelta(days=_date.date.weekday())
+            print(f"Min date updated to {self.min_date}")
 
     def calculate_dates_numbers(self):
         """Calculate the date numbers for each date in the collection."""
@@ -654,7 +656,7 @@ class FixtureCourtSlot:
         # print("Fixture Date Name")
         # print(self.name)
 
-    def get_week_number(self):
+    def get_week_number(self) -> int:
         """Return the week number of the fixture."""
         return self.court_slot.date.get_week_number()
 

@@ -23,10 +23,19 @@ def main():
     # league.write_output()
 
     min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
-    min_unprioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
+    max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
 
     print(f"Min Incorrect Weeks = {min_incorrect_weeks}")
-    print(f"max prioritised Slots = {min_unprioritised_slots}")
+    print(f"max prioritised Slots = {max_prioritised_slots}")
+
+    Schedule(
+        league=league,
+        predefined_fixtures_url=predefined_fixtures_url,
+        allowed_run_time=1000,
+        num_allowed_incorrect_fixture_week=min_incorrect_weeks,
+        num_forced_prioritised_nights=max_prioritised_slots,
+        write_output=True,
+    )
 
 
 def _get_min_incorrect_weeks(league, predefined_fixtures_url):
@@ -37,6 +46,7 @@ def _get_min_incorrect_weeks(league, predefined_fixtures_url):
             predefined_fixtures_url=predefined_fixtures_url,
             allowed_run_time=1000,
             num_allowed_incorrect_fixture_week=i,
+            write_output=False,
         )
         if schedule.model_result != "INFEASIBLE":
             return i
@@ -52,6 +62,7 @@ def _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_we
             allowed_run_time=1000,
             num_allowed_incorrect_fixture_week=min_incorrect_weeks,
             num_forced_prioritised_nights=i,
+            write_output=False,
         )
         if schedule_2023.model_result == "INFEASIBLE":
             return i - 1
