@@ -75,6 +75,7 @@ class Schedule:
         self.create_constraints_shared_players_diff_day()
         self.create_constraint_fixture_pair_separation(weeks_separated=2)
         self._create_constraint_prioritise_nights(num_forced=num_forced_prioritised_nights)
+        self.create_constraint_balance_home_away_fixtures(allowed_imbalance=1)
         # self.create_constraint_mix_home_and_away_fixture(weeks_separated=2)
 
         # self.create_objective_fixture_correct_week()
@@ -165,31 +166,71 @@ class Schedule:
                 _include_away=False,
             )
             num_fixtures = len(af)
-            if num_fixtures > 0:
-                for f in t.get_all_fixtures(
-                    _is_intra_club=True,
-                    _is_inter_club=False,
-                    _include_home=True,
-                    _include_away=True,
-                ):
-                    allow_fixture_slots = []
-                    disallowed_fixture_slots = []
-                    for fs in f.fixture_court_slots:
-                        is_start_of_seasons_slots: bool = fs.get_week_number() - min_week_num < num_fixtures
-                        is_post_christmas_slot: bool = (
-                            post_xmas_week_num <= fs.get_week_number() <= post_xmas_week_num + num_fixtures
-                        )
-                        if is_start_of_seasons_slots or is_post_christmas_slot:
-                            allow_fixture_slots.append(fs)
-                        else:
-                            disallowed_fixture_slots.append(fs)
-                    if len(allow_fixture_slots) > 0:
-                        # print("Team =", t.name)
-                        # print("Allowed_fixture_slots =", len(allow_fixture_slots))
-                        # print("Weeks to be allocated in =", num_fixtures * 2)
-                        self.model.Add(
-                            sum(self.selected_fixture[fs.identifier] for fs in disallowed_fixture_slots) <= 0
-                        )
+            if num_fixtures == 0:
+                continue
+
+            for f in t.get_all_fixtures(
+                _is_intra_club=True,
+                _is_inter_club=False,
+                _include_home=True,
+                _include_away=True,
+            ):
+                allow_fixture_slots = []
+                disallowed_fixture_slots = []
+                for fs in f.fixture_court_slots:
+                    fs_weeks_after_start = fs.get_week_number() - min_week_num
+                    is_start_of_seasons_slots: bool = 0 <= fs_weeks_after_start < num_fixtures
+
+                    fs_weeks_after_xmas = fs.get_week_number() - post_xmas_week_num
+                    is_post_christmas_slot: bool = 0 <= fs_weeks_after_xmas < num_fixtures
+
+                    if is_start_of_seasons_slots or is_post_christmas_slot:
+                        allow_fixture_slots.append(fs)
+                    else:
+                        disallowed_fixture_slots.append(fs)
+                if len(allow_fixture_slots) > 0:
+                    # print("Team =", t.name)
+                    # print("Allowed_fixture_slots =", len(allow_fixture_slots))
+                    # print("Weeks to be allocated in =", num_fixtures * 2)
+                    self.model.Add(sum(self.selected_fixture[fs.identifier] for fs in disallowed_fixture_slots) <= 0)
+
+    def create_constraint_balance_home_away_fixtures(self, allowed_imbalance=1):
+        """Ensure same number of home and away fixtures before and after Christmas."""
+        for team in self.league.get_teams():
+            home_fcs = team.get_fixture_court_slots(_include_home=True, _include_away=False)
+            away_fcs = team.get_fixture_court_slots(_include_home=False, _include_away=True)
+            pre_christmas_home_matches = [
+                fcs for fcs in home_fcs if fcs.get_week_number() <= self.league.get_christmas_week_number()
+            ]
+            post_christmas_home_matches = [
+                fcs for fcs in home_fcs if fcs.get_week_number() > self.league.get_christmas_week_number()
+            ]
+            pre_christmas_away_matches = [
+                fcs for fcs in away_fcs if fcs.get_week_number() <= self.league.get_christmas_week_number()
+            ]
+            post_christmas_away_matches = [
+                fcs for fcs in away_fcs if fcs.get_week_number() > self.league.get_christmas_week_number()
+            ]
+            self.model.Add(
+                sum(self.selected_fixture[fcs.identifier] for fcs in pre_christmas_home_matches)
+                - sum(self.selected_fixture[fcs.identifier] for fcs in pre_christmas_away_matches)
+                <= allowed_imbalance
+            )
+            self.model.Add(
+                sum(self.selected_fixture[fcs.identifier] for fcs in post_christmas_home_matches)
+                - sum(self.selected_fixture[fcs.identifier] for fcs in post_christmas_away_matches)
+                <= allowed_imbalance
+            )
+            self.model.Add(
+                sum(self.selected_fixture[fcs.identifier] for fcs in pre_christmas_away_matches)
+                - sum(self.selected_fixture[fcs.identifier] for fcs in pre_christmas_home_matches)
+                <= allowed_imbalance
+            )
+            self.model.Add(
+                sum(self.selected_fixture[fcs.identifier] for fcs in post_christmas_away_matches)
+                - sum(self.selected_fixture[fcs.identifier] for fcs in post_christmas_home_matches)
+                <= allowed_imbalance
+            )
 
     def create_constraint_fixture_pair_separation(self, weeks_separated=0):
         """Pairs of home and away matches should be separated by a number of weeks."""
@@ -402,4 +443,6 @@ class Schedule:
                 fcs_dict["Team"] = t.name
                 result.append(fcs_dict)
         _data_dict = pd.DataFrame(result)
-        write_gsheet_output_data(_data_dict, "Match Fixture slots by team", _file_location)
+        write_gsheet_output_data(
+            _output_data=_data_dict, _sheet_name="Match Fixture slots by team", _file_location=_file_location
+        )

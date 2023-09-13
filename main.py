@@ -55,7 +55,7 @@ def _get_min_incorrect_weeks(league, predefined_fixtures_url):
 
 def _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks):
     for i in range(0, 30):
-        print(f"Number Allowed Unprioritised Slots = {i}")
+        print(f"Number Prioritised Slots = {i}")
         schedule_2023 = Schedule(
             league=league,
             predefined_fixtures_url=predefined_fixtures_url,

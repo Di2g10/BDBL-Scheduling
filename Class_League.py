@@ -525,7 +525,7 @@ class Team:
                 result.append(f)
         return result
 
-    def get_fixture_court_slots(self, _include_home=True, _include_away=True):
+    def get_fixture_court_slots(self, _include_home=True, _include_away=True) -> List[FixtureCourtSlot]:
         """Return a list of all court slots for the teams fixtures."""
         _fixtures_slots = []
         if _include_home:
