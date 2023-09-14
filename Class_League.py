@@ -219,6 +219,23 @@ class League:
                         result.append(fcs)
         return result
 
+    def get_fixture_court_slots_for_teams_in_week(self, _teams: List[Team], week: int) -> List[FixtureCourtSlot]:
+        """Return all the fixture court slots in the league for the given teams on the given date.
+
+        :param _teams: list of teams to get fixture court slots for
+        :param _date:  date to get fixture court slots for
+        :return: List of fixture court slots for teams on date.
+        """
+        result = []
+        for _fixture in self.fixtures:
+            fixture_team_match_a = _fixture.home_team in _teams
+            fixture_team_match_h = _fixture.away_team in _teams
+            if fixture_team_match_a or fixture_team_match_h:
+                for fcs in _fixture.fixture_court_slots:
+                    if fcs.court_slot.date.get_week_number() == week:
+                        result.append(fcs)
+        return result
+
     def get_specific_fixture_court_slot(
         self, _home_team: Team, _away_team: Team, _date: Date
     ) -> List[FixtureCourtSlot]:

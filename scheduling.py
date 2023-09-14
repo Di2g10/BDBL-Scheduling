@@ -33,6 +33,12 @@ def _check_teams_share_players(t1, t2) -> bool:
     return same_rank_diff_league or adj_rank_same_league
 
 
+def _fix_team_name(_team_name_str):
+    if re.fullmatch(r".* [A-G]", _team_name_str):
+        return _team_name_str
+    return _team_name_str + " A"
+
+
 class Schedule:
     """A scheduling model to schedule fixtures for a given league.
 
@@ -69,17 +75,18 @@ class Schedule:
 
         self.create_constraint_one_slot_per_fixture()
         self.create_constraint_one_fixture_per_slot()
-        self.create_constraint_one_fixture_per_week_per_team()
+        self.create_constraint_one_fixture_per_weeks_per_team(weeks_separated=2)
         self.create_constraint_inter_club_matches_first()
         self.create_constraint_fixture_correct_week(num_allowed_incorrect=num_allowed_incorrect_fixture_week)
         self.create_constraints_shared_players_diff_day()
         self.create_constraint_fixture_pair_separation(weeks_separated=2)
         self._create_constraint_prioritise_nights(num_forced=num_forced_prioritised_nights)
         self.create_constraint_balance_home_away_fixtures(allowed_imbalance=1)
+        self.create_constraint_max_fixture_location_per_weeks_per_team(weeks_separated=6, max_per_period=2)
         # self.create_constraint_mix_home_and_away_fixture(weeks_separated=2)
 
         # self.create_objective_fixture_correct_week()
-        self.create_objective_maximise_fixtures_scheduled()
+        self.create_objective()
 
         if predefined_fixtures_url:
             self.input_predefined_fixtures(predefined_fixtures_url)
@@ -127,7 +134,7 @@ class Schedule:
                     <= 1
                 )
 
-    def create_constraint_one_fixture_per_week_per_team(self):
+    def create_constraint_one_fixture_per_weeks_per_team(self, weeks_separated=1):
         """Constraint that enforces that each team is scheduled for only one fixture in each week.
 
         For each team, creates a list of all potential slots for that team either home or away.
@@ -139,12 +146,36 @@ class Schedule:
                 _team_court_slots = defaultdict(list)
                 for fs in self.league.get_fixture_court_slots():
                     if fs.fixture.home_team == t or fs.fixture.away_team == t:
-                        _team_court_slots[str(fs.get_week_number())].append(fs)
+                        for i in range(weeks_separated):
+                            week_group = str(fs.get_week_number() + i)
+                            _team_court_slots[week_group].append(fs)
 
                 for _team_slots_in_week in _team_court_slots.values():
                     self.model.Add(
                         sum(self.selected_fixture[_fixture_slot.identifier] for _fixture_slot in _team_slots_in_week)
                         <= 1
+                    )
+
+    def create_constraint_max_fixture_location_per_weeks_per_team(self, weeks_separated=6, max_per_period=2):
+        """Constraint that enforces that each team is scheduled for only one home or away fixture in each week group.
+
+        For each team, creates a list of all potential slots for that team either home or away.
+        Finds the maximum week number for this set of court slots,
+        Uses this to loop through each potential
+        """
+        for c in self.league.clubs:
+            for t in c.teams:
+                _team_court_slots = defaultdict(list)
+                for fs in self.league.get_fixture_court_slots():
+                    if fs.fixture.home_team == t or fs.fixture.away_team == t:
+                        for i in range(weeks_separated):
+                            week_group = str(fs.get_week_number() + i) + str(fs.fixture.home_team == t)
+                            _team_court_slots[week_group].append(fs)
+
+                for _team_slots_in_week in _team_court_slots.values():
+                    self.model.Add(
+                        sum(self.selected_fixture[_fixture_slot.identifier] for _fixture_slot in _team_slots_in_week)
+                        <= max_per_period
                     )
 
     def create_constraint_inter_club_matches_first(self):
@@ -315,8 +346,8 @@ class Schedule:
             return
 
         for index, row in predefined_fixtures[_headings].iterrows():
-            _home_team = self.league.get_team_obj_from_str(self._fix_team_name(row["Home Team"]))
-            _away_team = self.league.get_team_obj_from_str(self._fix_team_name(row["Away Team"]))
+            _home_team = self.league.get_team_obj_from_str(_fix_team_name(row["Home Team"]))
+            _away_team = self.league.get_team_obj_from_str(_fix_team_name(row["Away Team"]))
             _date = self.league.get_date_obj_from_str(row["Match Date"])
 
             _fixture_slots = self.league.get_specific_fixture_court_slot(_home_team, _away_team, _date)
@@ -337,11 +368,6 @@ class Schedule:
                 == 0
             )
 
-    def _fix_team_name(self, _team_name_str):
-        if re.fullmatch(r".* [A-G]", _team_name_str):
-            return _team_name_str
-        return _team_name_str + " A"
-
     def create_objective_fixture_correct_week(self):
         """Create the objective function to maximise the number of fixtures in the correct week."""
         correct_week_fixture_slots = []
@@ -353,11 +379,23 @@ class Schedule:
             sum(self.selected_fixture[_fixture_slot.identifier] for _fixture_slot in correct_week_fixture_slots)
         )
 
-    def create_objective_maximise_fixtures_scheduled(self):
-        """Create the objective function to maximise the number of fixtures scheduled."""
+    def create_objective(self):
+        """Create the objective function.
+
+        - Maximise the number of fixtures scheduled
+        - Prioritise matches earlier in the season.
+        """
+        max_week_number = max(
+            [_fixture_slot.court_slot.date.get_week_number() for _fixture_slot in self.league.get_fixture_court_slots()]
+        )
         self.model.Maximize(
             sum(
-                self.selected_fixture[_fixture_slot.identifier]
+                self.selected_fixture[_fixture_slot.identifier] * 100_000_000
+                for _fixture_slot in self.league.get_fixture_court_slots()
+            )
+            + sum(
+                max_week_number
+                - self.selected_fixture[_fixture_slot.identifier] * _fixture_slot.court_slot.date.get_week_number()
                 for _fixture_slot in self.league.get_fixture_court_slots()
             )
         )
@@ -414,9 +452,8 @@ class Schedule:
                         fixture_has_been_scheduled = True
                         print(fixture_slot.friendly_name)
                 if fixture_has_been_scheduled is not True:
-                    print(f"Fixture not Scheduled {fixture_slot.friendly_name}")
+                    print(f"Fixture not Scheduled {fixture.name}")
                     status_name = "INFEASIBLE"
-                    print(f"Status Update: {status_name}")
 
             # for _fixture_slot in self.league.get_fixture_court_slots():
             #     _is_scheduled = solver.Value(self.selected_fixture[_fixture_slot.identifier])
@@ -427,6 +464,7 @@ class Schedule:
             if write_output:
                 self._write_schedule_to_gsheet(self.league.league_management_URL)
 
+        print(f"Status Update: {status_name}")
         return status_name
 
     def _write_schedule_to_gsheet(self, _file_location):

@@ -22,16 +22,20 @@ def main():
 
     # league.write_output()
 
-    min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
-    max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
+    # min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
+    # max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
+
+    min_incorrect_weeks = 4
+    max_prioritised_slots = 6
 
     print(f"Min Incorrect Weeks = {min_incorrect_weeks}")
     print(f"max prioritised Slots = {max_prioritised_slots}")
 
+    six_hours = 6 * 60 * 60
     Schedule(
         league=league,
         predefined_fixtures_url=predefined_fixtures_url,
-        allowed_run_time=1000,
+        allowed_run_time=six_hours,
         num_allowed_incorrect_fixture_week=min_incorrect_weeks,
         num_forced_prioritised_nights=max_prioritised_slots,
         write_output=True,
