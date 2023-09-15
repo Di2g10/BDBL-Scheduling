@@ -11,7 +11,7 @@ from scheduling import Schedule
 
 def main():
     """Run the analysis."""
-    league_management_url = "https://docs.google.com/spreadsheets/d/1YhcIdtG2mSWujD7ZOJEqE7TyNL9FbCx58rP7NQTKfBg"
+    league_management_url = "https://docs.google.com/spreadsheets/d/1AqwwFCDRMErbE-H2lzE7Dv9V8rq_7OYDnxYy8jL08Ow"  # V2
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1oZ2tPoIKX5V9Mvm70LplUPrivn8rW50wa5QmNBX2dwM"
 
     league = reload_league_data_from_gsheet(_load_from_gsheets=False, _league_management_url=league_management_url)
@@ -25,17 +25,17 @@ def main():
     # min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
     # max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
 
-    min_incorrect_weeks = 4
+    min_incorrect_weeks = 0
     max_prioritised_slots = 6
 
     print(f"Min Incorrect Weeks = {min_incorrect_weeks}")
     print(f"max prioritised Slots = {max_prioritised_slots}")
 
-    six_hours = 6 * 60 * 60
+    two_hours = 2 * 60 * 60
     Schedule(
         league=league,
         predefined_fixtures_url=predefined_fixtures_url,
-        allowed_run_time=six_hours,
+        allowed_run_time=two_hours,
         num_allowed_incorrect_fixture_week=min_incorrect_weeks,
         num_forced_prioritised_nights=max_prioritised_slots,
         write_output=True,
@@ -48,7 +48,7 @@ def _get_min_incorrect_weeks(league, predefined_fixtures_url):
         schedule = Schedule(
             league=league,
             predefined_fixtures_url=predefined_fixtures_url,
-            allowed_run_time=1000,
+            allowed_run_time=20,
             num_allowed_incorrect_fixture_week=i,
             write_output=False,
         )
@@ -63,7 +63,7 @@ def _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_we
         schedule_2023 = Schedule(
             league=league,
             predefined_fixtures_url=predefined_fixtures_url,
-            allowed_run_time=1000,
+            allowed_run_time=20,
             num_allowed_incorrect_fixture_week=min_incorrect_weeks,
             num_forced_prioritised_nights=i,
             write_output=False,
