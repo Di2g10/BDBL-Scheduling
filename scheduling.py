@@ -282,10 +282,10 @@ class Schedule:
                 if _check_teams_share_players(t1, t2):
                     self._create_constraint_shared_players_diff_day(t1, t2)
 
-    def _create_constraint_shared_players_diff_day(self, t1, t2):
+    def _create_constraint_shared_players_diff_week(self, t1, t2):
         """Constraint to ensure the players don't play multiple fixtures on the same day."""
-        for d in self.league.dates.dates:
-            fcs_list = self.league.get_fixture_court_slots_for_teams_on_date([t1, t2], d)
+        for week in self.league.dates.get_week_range():
+            fcs_list = self.league.get_fixture_court_slots_for_teams_in_week([t1, t2], week)
             if len(fcs_list) > 0:
                 self.model.Add(sum(self.selected_fixture[fcs.identifier] for fcs in fcs_list) <= 1)
 
