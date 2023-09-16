@@ -11,7 +11,7 @@ from scheduling import Schedule
 
 def main():
     """Run the analysis."""
-    league_management_url = "https://docs.google.com/spreadsheets/d/1AqwwFCDRMErbE-H2lzE7Dv9V8rq_7OYDnxYy8jL08Ow"  # V2
+    league_management_url = "https://docs.google.com/spreadsheets/d/1xCEYGyW6FErbfJXhwuXhX23N3QSUJzEu3ryV9Ep0z4M"  # V3
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1oZ2tPoIKX5V9Mvm70LplUPrivn8rW50wa5QmNBX2dwM"
 
     league = reload_league_data_from_gsheet(_load_from_gsheets=False, _league_management_url=league_management_url)
@@ -31,11 +31,11 @@ def main():
     print(f"Min Incorrect Weeks = {min_incorrect_weeks}")
     print(f"max prioritised Slots = {max_prioritised_slots}")
 
-    two_hours = 2 * 60 * 60
+    2 * 60 * 60
     Schedule(
         league=league,
         predefined_fixtures_url=predefined_fixtures_url,
-        allowed_run_time=two_hours,
+        allowed_run_time=60,
         num_allowed_incorrect_fixture_week=min_incorrect_weeks,
         num_forced_prioritised_nights=max_prioritised_slots,
         write_output=True,
