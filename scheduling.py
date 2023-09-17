@@ -79,15 +79,17 @@ class Schedule:
         self.create_constraint_inter_club_matches_first()
         self.create_constraint_fixture_correct_week(num_allowed_incorrect=num_allowed_incorrect_fixture_week)
         self.create_constraints_shared_players_diff_week()
-        self.create_constraint_fixture_pair_separation(weeks_separated=2)
+        self.create_constraint_fixture_pair_separation(weeks_separated=6)
         self._create_constraint_prioritise_nights(num_forced=num_forced_prioritised_nights)
         self.create_constraint_balance_home_away_fixtures(allowed_imbalance=1)
         self.create_constraint_max_fixture_location_per_weeks_per_team(weeks_separated=6, max_per_period=2)
         self.create_constrain_limit_pre_christmas_matches()
+        self.create_constraint_one_fixture_of_pair_pre_christmas()
+        # self.create_constraint_more_fixtures_after_xmas() duplicated with above
         # self.create_constraint_mix_home_and_away_fixture(weeks_separated=2)
 
         # self.create_objective_fixture_correct_week()
-        self.create_objective()
+        self.create_objective_function()
 
         if predefined_fixtures_url:
             self.input_predefined_fixtures(predefined_fixtures_url)
@@ -254,38 +256,53 @@ class Schedule:
         for team in self.league.get_teams():
             home_fcs = team.get_fixture_court_slots(_include_home=True, _include_away=False)
             away_fcs = team.get_fixture_court_slots(_include_home=False, _include_away=True)
-            pre_christmas_home_matches = [
-                fcs for fcs in home_fcs if fcs.get_week_number() <= self.league.get_christmas_week_number()
+
+            pre_xmas_home_match_vars = [
+                self.selected_fixture[fcs.identifier]
+                for fcs in home_fcs
+                if fcs.get_week_number() < self.league.get_christmas_week_number()
             ]
-            post_christmas_home_matches = [
-                fcs for fcs in home_fcs if fcs.get_week_number() > self.league.get_christmas_week_number()
+            post_xmas_home_match_vars = [
+                self.selected_fixture[fcs.identifier]
+                for fcs in home_fcs
+                if fcs.get_week_number() >= self.league.get_christmas_week_number()
             ]
-            pre_christmas_away_matches = [
-                fcs for fcs in away_fcs if fcs.get_week_number() <= self.league.get_christmas_week_number()
+            pre_xmas_away_match_vars = [
+                self.selected_fixture[fcs.identifier]
+                for fcs in away_fcs
+                if fcs.get_week_number() < self.league.get_christmas_week_number()
             ]
-            post_christmas_away_matches = [
-                fcs for fcs in away_fcs if fcs.get_week_number() > self.league.get_christmas_week_number()
+            post_xmas_away_match_vars = [
+                self.selected_fixture[fcs.identifier]
+                for fcs in away_fcs
+                if fcs.get_week_number() >= self.league.get_christmas_week_number()
             ]
-            self.model.Add(
-                sum(self.selected_fixture[fcs.identifier] for fcs in pre_christmas_home_matches)
-                - sum(self.selected_fixture[fcs.identifier] for fcs in pre_christmas_away_matches)
-                <= allowed_imbalance
-            )
-            self.model.Add(
-                sum(self.selected_fixture[fcs.identifier] for fcs in post_christmas_home_matches)
-                - sum(self.selected_fixture[fcs.identifier] for fcs in post_christmas_away_matches)
-                <= allowed_imbalance
-            )
-            self.model.Add(
-                sum(self.selected_fixture[fcs.identifier] for fcs in pre_christmas_away_matches)
-                - sum(self.selected_fixture[fcs.identifier] for fcs in pre_christmas_home_matches)
-                <= allowed_imbalance
-            )
-            self.model.Add(
-                sum(self.selected_fixture[fcs.identifier] for fcs in post_christmas_away_matches)
-                - sum(self.selected_fixture[fcs.identifier] for fcs in post_christmas_home_matches)
-                <= allowed_imbalance
-            )
+
+            self.model.Add(sum(pre_xmas_home_match_vars) - sum(pre_xmas_away_match_vars) <= allowed_imbalance)
+            self.model.Add(sum(post_xmas_home_match_vars) - sum(post_xmas_away_match_vars) <= allowed_imbalance)
+            self.model.Add(sum(pre_xmas_away_match_vars) - sum(pre_xmas_home_match_vars) <= allowed_imbalance)
+            self.model.Add(sum(post_xmas_away_match_vars) - sum(post_xmas_home_match_vars) <= allowed_imbalance)
+
+            pre_xmas_match_vars = pre_xmas_home_match_vars + pre_xmas_away_match_vars
+            post_xmas_match_vars = post_xmas_home_match_vars + post_xmas_away_match_vars
+            self.model.Add(sum(pre_xmas_match_vars) <= sum(post_xmas_match_vars))
+
+    def create_constraint_more_fixtures_after_xmas(self):
+        """Ensure same number of home and away fixtures before and after Christmas."""
+        for team in self.league.get_teams():
+            fcs = team.get_fixture_court_slots(_include_home=True, _include_away=True)
+            pre_xmas_match_vars = [
+                self.selected_fixture[fcs.identifier]
+                for fcs in fcs
+                if fcs.get_week_number() < self.league.get_christmas_week_number()
+            ]
+            post_xmas_match_vars = [
+                self.selected_fixture[fcs.identifier]
+                for fcs in fcs
+                if fcs.get_week_number() >= self.league.get_christmas_week_number()
+            ]
+
+            self.model.Add(sum(pre_xmas_match_vars) <= sum(post_xmas_match_vars))
 
     def create_constraint_fixture_pair_separation(self, weeks_separated=0):
         """Pairs of home and away matches should be separated by a number of weeks."""
@@ -298,6 +315,21 @@ class Schedule:
                     if t2 in [f.fixture.home_team, f.fixture.away_team]:
                         between_team_fixture_slot_list.append(f)
                 self._create_constraint_fixture_in_list_separated(between_team_fixture_slot_list, weeks_separated)
+
+    def create_constraint_one_fixture_of_pair_pre_christmas(self):
+        """Ensure at most fixture of a pair is before Christmas."""
+        for t1, t2 in itertools.combinations(self.league.get_teams(), 2):
+            t1_fcs = t1.get_fixture_court_slots(_include_home=True, _include_away=True)
+            t2_fcs = t2.get_fixture_court_slots(_include_home=True, _include_away=True)
+            # get intersection of fixture court slots
+            t1_t2_fcs = [fcs for fcs in t1_fcs if fcs in t2_fcs]
+            if t1_t2_fcs:
+                pre_xmas_match_vars = [
+                    self.selected_fixture[fcs.identifier]
+                    for fcs in t1_t2_fcs
+                    if fcs.get_week_number() < self.league.get_christmas_week_number()
+                ]
+                self.model.Add(sum(pre_xmas_match_vars) <= 1)
 
     def create_constraints_shared_players_diff_week(self):
         """Constraint to ensure the players don't play multiple fixtures on the same day."""
@@ -403,24 +435,36 @@ class Schedule:
             sum(self.selected_fixture[_fixture_slot.identifier] for _fixture_slot in correct_week_fixture_slots)
         )
 
-    def create_objective(self):
+    def create_objective_function(self):
         """Create the objective function.
 
         - Maximise the number of fixtures scheduled
-        - Prioritise matches earlier in the season.
+        - De prioritise matches at the end of the season
+        - Attempt to schedule matches pre-Christmas. (limited to at most half the matches)
         """
         max_week_number = max(
             [_fixture_slot.court_slot.date.get_week_number() for _fixture_slot in self.league.get_fixture_court_slots()]
         )
+        league_ideal_end_week = self.league.get_christmas_week_number() * 2 - self.league.get_min_week_number()
+
         self.model.Maximize(
+            # Attempt to schedule all fixtures
             sum(
                 self.selected_fixture[_fixture_slot.identifier] * 100_000_000
                 for _fixture_slot in self.league.get_fixture_court_slots()
             )
+            # De prioritise matches at the end of the season
             + sum(
                 max_week_number
                 - self.selected_fixture[_fixture_slot.identifier] * _fixture_slot.court_slot.date.get_week_number()
                 for _fixture_slot in self.league.get_fixture_court_slots()
+                if _fixture_slot.court_slot.date.get_week_number() > league_ideal_end_week
+            )
+            # attempt to schedule matches pre-Christmas. (limited to at most half the matches)
+            + sum(
+                self.selected_fixture[_fixture_slot.identifier] * 100_000
+                for _fixture_slot in self.league.get_fixture_court_slots()
+                if _fixture_slot.court_slot.date.get_week_number() < self.league.get_christmas_week_number()
             )
         )
 
