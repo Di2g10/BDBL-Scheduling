@@ -25,7 +25,7 @@ def main():
     # min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
     # max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
 
-    min_incorrect_weeks = 0
+    min_incorrect_weeks = 1
     max_prioritised_slots = 6
 
     print(f"Min Incorrect Weeks = {min_incorrect_weeks}")

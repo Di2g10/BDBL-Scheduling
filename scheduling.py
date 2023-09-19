@@ -22,15 +22,11 @@ def _check_teams_share_players(t1, t2) -> bool:
     if not teams_different:
         return False
 
-    same_rank = t1.rank == t2.rank
     same_league = t1.league == t2.league
-    adj_rank = abs(ord(t1.rank) - ord(t2.rank)) == 1
+    abs(ord(t1.rank) - ord(t2.rank)) == 1
     league_included_mixed = "Mixed" in [t1.league, t2.league]
 
-    same_rank_diff_league = same_rank and not same_league and league_included_mixed
-    adj_rank_same_league = adj_rank and same_league
-
-    return same_rank_diff_league or adj_rank_same_league
+    return not same_league and league_included_mixed
 
 
 def _fix_team_name(_team_name_str):
@@ -238,7 +234,8 @@ class Schedule:
                 _include_home=True,
                 _include_away=True,
             )
-            fixture_count = len(fixtures)
+            max_fixture_count = len(fixtures) // 2
+            min_fixture_count = min(max_fixture_count, 3)
 
             pre_christmas_fixture_court_slots = []
 
@@ -246,10 +243,21 @@ class Schedule:
                 for fixture_court_slot in fixture.fixture_court_slots:
                     if fixture_court_slot.court_slot.date.get_week_number() <= post_xmas_week_num:
                         pre_christmas_fixture_court_slots.append(fixture_court_slot)
-            self.model.Add(
-                sum(self.selected_fixture[fs.identifier] for fs in pre_christmas_fixture_court_slots)
-                <= fixture_count // 2
-            )
+
+            fixture_vars = [self.selected_fixture[fs.identifier] for fs in pre_christmas_fixture_court_slots]
+            self.model.Add(sum(fixture_vars) <= max_fixture_count)
+            self.model.Add(sum(fixture_vars) >= min_fixture_count)
+
+    def create_constraint_at_least_one_match_per_month(self):
+        """Each team plays at least once each month for the duration of the season."""
+        for team in self.league.get_teams():
+            for month in range(1, 13):
+                fixture_court_slots = [
+                    fs
+                    for fs in team.get_fixture_court_slots(_include_home=True, _include_away=True)
+                    # if fs.court_slot.date.date. == month # todo: fix this
+                ]
+                self.model.Add(sum(self.selected_fixture[fs.identifier] for fs in fixture_court_slots) >= 1)
 
     def create_constraint_balance_home_away_fixtures(self, allowed_imbalance=1):
         """Ensure same number of home and away fixtures before and after Christmas."""

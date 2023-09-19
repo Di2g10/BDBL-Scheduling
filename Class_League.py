@@ -478,11 +478,11 @@ class Dates:
         for d in self.dates:
             d.calculate_date_numbers(self.min_date)
 
-    def get_week_range(self):
-        """Return a range between the first and last week number."""
+    def get_week_range(self) -> list[int]:
+        """Return a list of all the week numbers."""
         min_week = min([d.get_week_number() for d in self.dates])
-        max_week = min([d.get_week_number() for d in self.dates])
-        return range(min_week, max_week)
+        max_week = max([d.get_week_number() for d in self.dates])
+        return list(range(min_week, max_week))
 
 
 # An entry into a specific division of a specific league type.
