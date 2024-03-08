@@ -10,7 +10,9 @@ from scheduling import Schedule
 
 
 def main():
-    """Run the analysis."""
+    """
+    This method is the entry point of the program.
+    """
     league_management_url = "https://docs.google.com/spreadsheets/d/1xCEYGyW6FErbfJXhwuXhX23N3QSUJzEu3ryV9Ep0z4M"  # V3
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1oZ2tPoIKX5V9Mvm70LplUPrivn8rW50wa5QmNBX2dwM"
 
