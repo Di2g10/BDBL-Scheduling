@@ -55,12 +55,21 @@ class Schedule:
         num_forced_prioritised_nights: int = 0,
         write_output: bool = True,
     ):
-        """Initialize a new scheduling model for a given league.
+        """
 
-        :param league: The prepared league to be scheduled
-        :param predefined_fixtures_url: Url of spreadsheet containing already commited match dates
-        :param allowed_run_time: Seconds the model will be left to run for before a sub optimial result will be returned
-        :param num_allowed_incorrect_fixture_week: Fix the number of matches that can be scheduled on the incorrect week
+        Create a new instance of the class.
+
+        Parameters:
+        - league: League: The league for which the fixtures will be generated.
+        - allowed_run_time: int: The maximum allowed run time for the model in seconds.
+        - predefined_fixtures_url: str (optional): The URL of a file containing predefined fixtures.
+        - num_allowed_incorrect_fixture_week: int (optional): The number of allowed incorrect fixture weeks.
+        - num_forced_prioritised_nights: int (optional): The number of forced prioritised nights.
+        - write_output: bool (optional): Whether to write the output to a file.
+
+        Returns:
+        None
+
         """
         self.league = league
         self.model: CpModel = cp_model.CpModel()
@@ -558,5 +567,5 @@ class Schedule:
                 result.append(fcs_dict)
         _data_dict = pd.DataFrame(result)
         write_gsheet_output_data(
-            _output_data=_data_dict, _sheet_name="Match Fixture slots by team", _file_location=_file_location
+            output_data=_data_dict, sheet_name="Match Fixture slots by team", file_location=_file_location
         )
