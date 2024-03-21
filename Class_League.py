@@ -1,29 +1,12 @@
 """Contains the League class and its methods."""
-
+from __future__ import annotations
 
 from datetime import datetime, timedelta
+from typing import List
 
 import pandas as pd
 
 from gsheets import get_gsheet_data, write_gsheet_output_data
-
-
-class Team:
-    """Represents a team and initializes its instance with the given _team_name and _division."""
-
-    pass
-
-
-class Date:
-    """Represents a date and initializes its instance with the given _date_number and _date."""
-
-    pass
-
-
-class FixtureCourtSlot:
-    """Represents a fixture court slot."""
-
-    pass
 
 
 # League is the group of all clubs and teams entering for all Divisions for the year.
@@ -32,7 +15,7 @@ class League:
 
     def __init__(self, _league_management_url):
         """Initialize the class the given _league_management_url.
-
+4
         Attributes:
         ----------
         name (str): Name of the league, initialized to "Something".
@@ -59,9 +42,9 @@ class League:
         """
         self.name: str = "Something"
         self.league_management_URL = _league_management_url
-        self.clubs = []
-        self.dates = Dates()
-        self.fixtures = []
+        self.clubs: List[Club] = []
+        self.dates: Dates = Dates()
+        self.fixtures: List[Fixture] = []
 
         # Club Entry management
         _club_entry_management = pd.DataFrame(
@@ -109,16 +92,16 @@ class League:
             "Teams Entered",
             "New Division",
         ]
-        for index, row in _previous_league_position_df[_headings].iterrows():
+        for _, row in _previous_league_position_df[_headings].iterrows():
             _club: Club = self.get_club(row["Club"])
             if _club:
                 _team: Team = _club.get_team(row["League"], row["Team"])
                 if _team:
                     try:
                         _team.division = int(row["New Division"])
-                    except ValueError:
+                    except ValueError as err:
                         print(f"Error Cause by {row.to_markdown()}")
-                        raise ValueError(f"Error Cause by {row}")
+                        raise ValueError(f"Error Cause by {row}") from err
 
                 else:
                     print("Missing Team:", row["Club"], row["League"], row["Team"])
@@ -131,14 +114,14 @@ class League:
                     f"Team {t.name} doesn't have specific rank from previous season. Missing from spreadsheet"
                 )
 
-    def get_club(self, _club_name_str):
+    def get_club(self, club_name_str):
         """Get the club with the given _club_name_str.
 
-        :param _club_name_str: Name of the club to be returned
+        :param club_name_str: Name of the club to be returned
         :return: the selected Club Instance
         """
         for c in self.clubs:
-            if c.name == _club_name_str:
+            if c.name == club_name_str:
                 return c
         return None
 
@@ -158,10 +141,7 @@ class League:
 
         :return: List of Teams
         """
-        _team_list = []
-        for c in self.clubs:
-            _team_list.extend(c.teams)
-        return _team_list
+        return [team for c in self.clubs for team in c.teams]
 
     def write_teams_entered(self) -> None:
         """Write the teams entered to the league management sheet.
@@ -354,10 +334,10 @@ class Club:
         for index, row in _teams_entering[_teams_columns].iterrows():
             if row["League Name"]:
                 t = Team(
-                    self,
-                    row["League Name"],
-                    row["Team Rank"],
-                    row["Availability Group"],
+                        self,
+                        row["League Name"],
+                        row["Team Rank"],
+                        row["Availability Group"],
                 )
                 self.teams.append(t)
 
@@ -588,11 +568,11 @@ class CourtSlot:
         else:
             raise ValueError("Team already linked with court slot")
 
-    def is_week_team_type_match(self):
-        """Return true if the court slot is for the correct team type for the date."""
-        if self.date.league_type == "Open/Ladies":
-            return self.team.league in ["Open", "Ladies 4"]
-        return self.team.league == "Mixed"
+    # def is_week_team_type_match(self):
+    #     """Return true if the court slot is for the correct team type for the date."""
+    #     if self.date.league_type == "Open/Ladies":
+    #         return self.team.league in ["Open", "Ladies 4"]
+    #     return self.team.league == "Mixed"
 
     def write_output(self):
         """Print the court slot name."""
