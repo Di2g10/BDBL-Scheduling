@@ -5,8 +5,16 @@ requires-python = ">=3.9"
 [tool.black]
 line-length = 120
 [tool.ruff]
-# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-select = ["E", "F", "I", "N","D","PD","RUF","PL","NPY","PTH","RET","SIM"]
+select = [
+    "A",  # prevent using keywords that clobber python builtins
+    "B",  # bugbear: security warnings
+    "E",  # pycodestyle
+    "F",  # pyflakes
+    "ISC",  # implicit string concatenation
+    "UP",  # alert you when better syntax is available in your python version
+    "RUF",  # the ruff developer's own rules
+]
+
 ignore = ["D213","D203","PD901","PD011","PTH123"]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.

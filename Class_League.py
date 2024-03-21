@@ -1,9 +1,7 @@
 """Contains the League class and its methods."""
 
-from __future__ import print_function
 
 from datetime import datetime, timedelta
-from typing import List
 
 import pandas as pd
 
@@ -130,7 +128,7 @@ class League:
         for t in self.get_teams():
             if t.division == 0:
                 raise ValueError(
-                    f"Team {t.name} doesn't have specific rank from previous season. " f"Missing from spreadsheet"
+                    f"Team {t.name} doesn't have specific rank from previous season. Missing from spreadsheet"
                 )
 
     def get_club(self, _club_name_str):
@@ -155,7 +153,7 @@ class League:
         for c in self.clubs:
             c.write_output()
 
-    def get_teams(self) -> List[Team]:
+    def get_teams(self) -> list[Team]:
         """Return a list of all the teams in this league.
 
         :return: List of Teams
@@ -192,7 +190,7 @@ class League:
                     fixture_i = Fixture(hm_team, aw_team)
                     self.fixtures.append(fixture_i)
 
-    def get_fixture_court_slots(self) -> List[FixtureCourtSlot]:
+    def get_fixture_court_slots(self) -> list[FixtureCourtSlot]:
         """Return a list of all the fixture court slots in the league.
 
         :return: List of FixtureCourtSlot
@@ -202,7 +200,7 @@ class League:
             _fixtures_dates.extend(_fixture.fixture_court_slots)
         return _fixtures_dates
 
-    def get_fixture_court_slots_for_teams_on_date(self, _teams: List[Team], _date: Date) -> List[FixtureCourtSlot]:
+    def get_fixture_court_slots_for_teams_on_date(self, _teams: list[Team], _date: Date) -> list[FixtureCourtSlot]:
         """Return all the fixture court slots in the league for the given teams on the given date.
 
         :param _teams: list of teams to get fixture court slots for
@@ -219,7 +217,7 @@ class League:
                         result.append(fcs)
         return result
 
-    def get_fixture_court_slots_for_teams_in_week(self, _teams: List[Team], week: int) -> List[FixtureCourtSlot]:
+    def get_fixture_court_slots_for_teams_in_week(self, _teams: list[Team], week: int) -> list[FixtureCourtSlot]:
         """Return all the fixture court slots in the league for the given teams on the given date.
 
         :param _teams: list of teams to get fixture court slots for
@@ -238,7 +236,7 @@ class League:
 
     def get_specific_fixture_court_slot(
         self, _home_team: Team, _away_team: Team, _date: Date
-    ) -> List[FixtureCourtSlot]:
+    ) -> list[FixtureCourtSlot]:
         """Return a specific fixture court slot for the given home team, away team and date.
 
         :param _home_team: selected home team
@@ -548,7 +546,7 @@ class Team:
                 result.append(f)
         return result
 
-    def get_fixture_court_slots(self, _include_home=True, _include_away=True) -> List[FixtureCourtSlot]:
+    def get_fixture_court_slots(self, _include_home=True, _include_away=True) -> list[FixtureCourtSlot]:
         """Return a list of all court slots for the teams fixtures."""
         _fixtures_slots = []
         if _include_home:

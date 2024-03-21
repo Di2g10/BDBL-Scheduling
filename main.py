@@ -1,6 +1,5 @@
 """Main script to run the analysis."""
 
-from __future__ import print_function
 
 import pickle
 import sys

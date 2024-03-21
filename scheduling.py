@@ -1,12 +1,10 @@
 """Define the Schedule class."""
 
-from __future__ import print_function
 
 import itertools
 import re
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import List
 
 import pandas as pd
 from ortools.sat.python import cp_model
@@ -46,7 +44,7 @@ class Schedule:
     num_allowed_incorrect_fixture_week: Fix the number of matches that can be scheduled on the incorrect week
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         league: League,
         allowed_run_time: int,
@@ -382,7 +380,7 @@ class Schedule:
             self._create_constraint_fixture_in_list_separated(t_fcs_home, weeks_separated)
             self._create_constraint_fixture_in_list_separated(t_fcs_away, weeks_separated)
 
-    def _create_constraint_fixture_in_list_separated(self, fixture_list: List, weeks_separated):
+    def _create_constraint_fixture_in_list_separated(self, fixture_list: list, weeks_separated):
         """For each pair of fixtures in the list, ensure they are separated by a number of weeks."""
         _rules_added = 0
         for fcs1, fcs2 in itertools.combinations(fixture_list, 2):
@@ -508,7 +506,7 @@ class Schedule:
             def __init__(self):
                 cp_model.CpSolverSolutionCallback.__init__(self)
 
-            def OnSolutionCallback(self):  # noqa N802
+            def OnSolutionCallback(self):  # N802
                 print("Objective Value: ", self.ObjectiveValue())
                 print("Objective Bound: ", self.BestObjectiveBound())
                 print("Timestamp: ", self.UserTime())
