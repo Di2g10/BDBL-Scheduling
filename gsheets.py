@@ -8,15 +8,18 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 
-def get_gsheet_data(file_location, sheet_name):
-    """Download data from a Google sheets spreadsheet."""
+def get_gsheet_worksheet(gsheet_url: str, sheet_name: str) -> gspread.Worksheet:
+    """Download data from a Google sheets spreadsheet.
+
+    :param str gsheet_url: URL of a spreadsheet as it appears in a browser.
+    :param str sheet_name: Name of the sheet to download
+    :return: gspread.Worksheet the specified worksheet"""
     print(datetime.now())
     time.sleep(3)
     scope = Path("client_secret.json")
     credentials = ServiceAccountCredentials.from_json_keyfile_name(scope)
     client = gspread.authorize(credentials)
-    worksheet = client.open_by_url(file_location).worksheet(sheet_name)
-    data = worksheet.get_all_records()
+    worksheet = client.open_by_url(gsheet_url).worksheet(sheet_name)
     return worksheet
 
 

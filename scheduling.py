@@ -11,7 +11,7 @@ from ortools.sat.python import cp_model
 from ortools.sat.python.cp_model import CpModel
 
 from Class_League import League
-from gsheets import get_gsheet_data, write_gsheet_output_data
+from gsheets import get_gsheet_worksheet, write_gsheet_output_data
 
 
 def _check_teams_share_players(t1, t2) -> bool:
@@ -21,7 +21,6 @@ def _check_teams_share_players(t1, t2) -> bool:
         return False
 
     same_league = t1.league == t2.league
-    abs(ord(t1.rank) - ord(t2.rank)) == 1
     league_included_mixed = "Mixed" in [t1.league, t2.league]
 
     return not same_league and league_included_mixed
@@ -48,7 +47,7 @@ class Schedule:
         self,
         league: League,
         allowed_run_time: int,
-        predefined_fixtures_url: str = None,
+        predefined_fixtures_url: str = "",
         num_allowed_incorrect_fixture_week: int = 0,
         num_forced_prioritised_nights: int = 0,
         write_output: bool = True,
@@ -257,14 +256,15 @@ class Schedule:
 
     def create_constraint_at_least_one_match_per_month(self):
         """Each team plays at least once each month for the duration of the season."""
-        for team in self.league.get_teams():
-            for month in range(1, 13):
-                fixture_court_slots = [
-                    fs
-                    for fs in team.get_fixture_court_slots(_include_home=True, _include_away=True)
-                    # if fs.court_slot.date.date. == month # todo: fix this
-                ]
-                self.model.Add(sum(self.selected_fixture[fs.identifier] for fs in fixture_court_slots) >= 1)
+        raise NotImplementedError
+        # for team in self.league.get_teams():
+        #     for month in range(1, 13):
+        #         fixture_court_slots = [
+        #             fs
+        #             for fs in team.get_fixture_court_slots(_include_home=True, _include_away=True)
+        #             # if fs.court_slot.date.date. == month # todo: fix this
+        #         ]
+        #         self.model.Add(sum(self.selected_fixture[fs.identifier] for fs in fixture_court_slots) >= 1)
 
     def create_constraint_balance_home_away_fixtures(self, allowed_imbalance=1):
         """Ensure same number of home and away fixtures before and after Christmas."""
@@ -402,7 +402,7 @@ class Schedule:
 
     def input_predefined_fixtures(self, _fixture_sheet_url):
         """Read in a Google sheet of predefined fixtures and adds them to the model."""
-        predefined_fixtures = pd.DataFrame(get_gsheet_data(_fixture_sheet_url, "Sheet1").get_all_records())
+        predefined_fixtures = pd.DataFrame(get_gsheet_worksheet(_fixture_sheet_url, "Sheet1").get_all_records())
         _headings = [
             "Division",
             "Home Team",
@@ -416,7 +416,7 @@ class Schedule:
         if len(predefined_fixtures) == 0:
             return
 
-        for index, row in predefined_fixtures[_headings].iterrows():
+        for _, row in predefined_fixtures[_headings].iterrows():
             _home_team = self.league.get_team_obj_from_str(_fix_team_name(row["Home Team"]))
             _away_team = self.league.get_team_obj_from_str(_fix_team_name(row["Away Team"]))
             _date = self.league.get_date_obj_from_str(row["Match Date"])
@@ -506,7 +506,7 @@ class Schedule:
             def __init__(self):
                 cp_model.CpSolverSolutionCallback.__init__(self)
 
-            def OnSolutionCallback(self):  # N802
+            def OnSolutionCallback(self):  # noqa N802
                 print("Objective Value: ", self.ObjectiveValue())
                 print("Objective Bound: ", self.BestObjectiveBound())
                 print("Timestamp: ", self.UserTime())

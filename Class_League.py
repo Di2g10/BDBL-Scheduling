@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import List
 
 import pandas as pd
 
-from gsheets import get_gsheet_data, write_gsheet_output_data
+from gsheets import get_gsheet_worksheet, write_gsheet_output_data
 
 
 # League is the group of all clubs and teams entering for all Divisions for the year.
@@ -42,13 +41,13 @@ class League:
         """
         self.name: str = "Something"
         self.league_management_URL = _league_management_url
-        self.clubs: List[Club] = []
+        self.clubs: list[Club] = []
         self.dates: Dates = Dates()
-        self.fixtures: List[Fixture] = []
+        self.fixtures: list[Fixture] = []
 
         # Club Entry management
         _club_entry_management = pd.DataFrame(
-            get_gsheet_data(self.league_management_URL, "Club Entry Management").get_all_records()
+            get_gsheet_worksheet(self.league_management_URL, "Club Entry Management").get_all_records()
         )
         for club_url in _club_entry_management["Entry URL"]:
             if club_url:
@@ -82,7 +81,7 @@ class League:
         league = League("https://example.com/league_management")
         league._get_previous_league_position()
         """
-        _raw_gsheet = get_gsheet_data(self.league_management_URL, "Previous League organisation").get_all_records()
+        _raw_gsheet = get_gsheet_worksheet(self.league_management_URL, "Previous League organisation").get_all_records()
         _previous_league_position_df = pd.DataFrame(_raw_gsheet)
         _headings = [
             "League",
@@ -317,11 +316,11 @@ class Club:
         self.court_slots = []
 
         # Club Info Sheet
-        _club_info = pd.DataFrame(get_gsheet_data(self.fileLocation, "0. Club Information").get_all_records())
+        _club_info = pd.DataFrame(get_gsheet_worksheet(self.fileLocation, "0. Club Information").get_all_records())
         self.name = _club_info["Club Name"][0]
 
         # Teams Entering Sheet
-        _teams_entering = pd.DataFrame(get_gsheet_data(self.fileLocation, "1. Teams Entering").get_all_records())
+        _teams_entering = pd.DataFrame(get_gsheet_worksheet(self.fileLocation, "1. Teams Entering").get_all_records())
         _teams_columns = [
             "League Name",
             "Team Rank",
@@ -331,7 +330,7 @@ class Club:
         ]
         self.teams = []
 
-        for index, row in _teams_entering[_teams_columns].iterrows():
+        for _, row in _teams_entering[_teams_columns].iterrows():
             if row["League Name"]:
                 t = Team(
                         self,
@@ -345,11 +344,11 @@ class Club:
         self._get_club_availability()
 
     def _get_club_availability(self):
-        _club_availability = pd.DataFrame(get_gsheet_data(self.fileLocation, "2. Availability").get("C11:L300"))
+        _club_availability = pd.DataFrame(get_gsheet_worksheet(self.fileLocation, "2. Availability").get("C11:L300"))
         _club_availability.columns = _club_availability.iloc[0]
         _club_availability = _club_availability[1:]
         print(self.name)
-        for index, row in _club_availability.iterrows():
+        for _, row in _club_availability.iterrows():
             if row["Available"] != "Unavailable":
                 _date = self.league.dates.add_date(row["Date"], row["League Type"], row["Weekday"])
                 priority = row.get("Priority", False)
