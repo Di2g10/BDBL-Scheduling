@@ -37,3 +37,4 @@ black
 ruff
 matplotlib
 mplcursors
+pytest
