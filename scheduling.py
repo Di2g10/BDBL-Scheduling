@@ -10,7 +10,7 @@ import pandas as pd
 from ortools.sat.python import cp_model
 from ortools.sat.python.cp_model import CpModel
 
-from class_league import League
+from src.league_structure.league import League
 from gsheets import get_gsheet_worksheet, write_gsheet_output_data
 
 

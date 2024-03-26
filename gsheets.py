@@ -16,7 +16,7 @@ def get_gsheet_worksheet(gsheet_url: str, sheet_name: str) -> gspread.Worksheet:
     :return: gspread.Worksheet the specified worksheet"""
     print(datetime.now())
     time.sleep(3)
-    scope = Path("client_secret.json")
+    scope = Path.cwd().parent / "client_secret.json"
     credentials = ServiceAccountCredentials.from_json_keyfile_name(scope)
     client = gspread.authorize(credentials)
     worksheet = client.open_by_url(gsheet_url).worksheet(sheet_name)

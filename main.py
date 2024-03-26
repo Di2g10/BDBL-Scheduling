@@ -4,7 +4,7 @@
 import pickle
 import sys
 
-from class_league import League
+from src.league_structure.league import League
 from scheduling import Schedule
 
 

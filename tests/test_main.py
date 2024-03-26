@@ -1,6 +1,6 @@
 """Test the end to end process works correctly."""
-from main import reload_league_data_from_gsheet
 from scheduling import Schedule
+from src.import_league import load_league_data
 
 
 def test_main():
@@ -10,7 +10,7 @@ def test_main():
     league_management_url = "https://docs.google.com/spreadsheets/d/1cN1hr5q8is1uMnm6_hI7YusYKAEfD6o5SVSGpodTyzw"  # V3
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1GHFVMuVi2NaAu7W9gqy7eSxZmJsxfbTkh33S1nWbT8Q"
 
-    league = reload_league_data_from_gsheet(_load_from_gsheets=False, _league_management_url=league_management_url)
+    league = load_league_data(use_cache=True, league_management_url=league_management_url)
     # Print League data stats
     league.check_league_data()
 
