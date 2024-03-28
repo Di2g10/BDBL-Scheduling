@@ -12,14 +12,14 @@ class Team:
     It has a rank within the division and a home night.
     """
 
-    def __init__(self, club: club.Club, league_name, rank, availability_group):
+    def __init__(self, team_club: club.Club, league_name, rank, availability_group, division: int):
         """Initialise the team."""
-        self.club = club
+        self.club = team_club
         self.league = league_name
         self.rank = rank
         self.availability_group = availability_group
         self.court_slots = []
-        self.division: int = 0
+        self.division: int = division
         self.home_fixtures = []
         self.away_fixtures = []
         self.name = self.club.name + " " + self.league + " " + self.rank
