@@ -7,11 +7,11 @@ from src.league_structure.date import Date
 
 
 class Dates:
-    """Collection of all dates available to the league. Handles the uniques of the Date object."""
+    """Collection of all dates available to the league. Ensures the uniqueness of the Date object in the list."""
 
     def __init__(self):
         """Initialise the collection of dates."""
-        self.dates = []
+        self.dates: list[Date] = []
         self.date_values = ()
         self.min_date = datetime(2021, 11, 1)
 

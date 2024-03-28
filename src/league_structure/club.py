@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import pandas as pd
 
 import src.league_structure.court_slot as court_slot
+from src.league_structure.date import Date
+from src.league_structure.dates import Dates
 import src.league_structure.team as team
-import src.league_structure.league as league
 
 from gsheets import get_gsheet_worksheet
 
@@ -19,51 +19,11 @@ class Club:
     and share courts.
     """
 
-    def __init__(self, _league: league.League, _file_location):
+    def __init__(self, dates: Dates, file_location):
         """Initialise the Club Class."""
-        self.fileLocation = _file_location
-        self.league = _league
-        self.court_slots = []
-
-        # Club Info Sheet
-        club_info_sheet = get_gsheet_worksheet(self.fileLocation, "0. Club Information")
-        self.name = club_info_sheet.get_all_records(expected_headers=["Club Name"])[0]["Club Name"]
-
-        # Teams Entering Sheet
-        teams_sheet = get_gsheet_worksheet(self.fileLocation, "1. Teams Entering")
-        teams_columns = ["League Name", "Team Rank", "Availability Group", "Comments", "Home Nights Required"]
-        teams = teams_sheet.get_all_records(expected_headers=teams_columns)
-
-        self.teams = []
-
-        for row in teams:
-            if row["League Name"]:
-                t = team.Team(
-                    club=self,
-                    league_name=row["League Name"],
-                    rank=row["Team Rank"],
-                    availability_group=row["Availability Group"],
-                )
-                self.teams.append(t)
-
-        # Get Club Availability
-        self._get_club_availability()
-
-    def _get_club_availability(self):
-        _club_availability = pd.DataFrame(get_gsheet_worksheet(self.fileLocation, "2. Availability").get("C11:L300"))
-        _club_availability.columns = _club_availability.iloc[0]
-        _club_availability = _club_availability[1:]
-        print(self.name)
-        for _, row in _club_availability.iterrows():
-            if row["Available"] != "Unavailable":
-                _date = self.league.dates.add_date(row["Date"], row["League Type"], row["Weekday"])
-                priority = row.get("Priority", False)
-                for _concurrent_matches in range(int(row["No. Concurrent Matches"])):
-                    _court_slot = court_slot.CourtSlot(_date, self, _concurrent_matches, priority)
-                    self.court_slots.append(_court_slot)
-                    for t in self.teams:
-                        if t.availability_group == row["Available"]:
-                            _court_slot.add_team(t)
+        self.name = _get_club_names_from_gsheet(file_location)
+        self.teams: list[team.Team] = self._create_teams_from_gsheet(file_location)
+        self.court_slots: list[court_slot.CourtSlot] = self._create_court_slots(dates, file_location)
 
     def write_output(self):
         """Write output for the club."""
@@ -103,3 +63,61 @@ class Club:
     def __repr__(self):
         """Return a string representation of the club."""
         return self.name
+
+    def _create_teams_from_gsheet(self, file_location: str) -> list[team.Team]:
+        team_info = _get_teams_from_gsheet(file_location)
+        teams: list[team.Team] = []
+
+        for row in team_info:
+            if row["Club Name"]:
+                t = self._create_team_from_dict(row)
+                teams.append(t)
+
+        return teams
+
+    def _create_team_from_dict(self, team_dict: dict[str, int | float | str]):
+        return team.Team(
+            club=self,
+            league_name=team_dict["League Name"],
+            rank=team_dict["Team Rank"],
+            availability_group=team_dict["Availability Group"],
+            division=team_dict["Division"],
+        )
+
+    def _create_court_slots(self, dates: Dates, file_location: str) -> list[court_slot.CourtSlot]:
+        availability = _get_club_availability_from_gsheet(file_location)
+        court_slots: list[court_slot.CourtSlot] = []
+        for row in availability:
+            if row["Available"] == "Unavailable":
+                continue
+            date = dates.add_date(row["Date"], row["League Type"], row["Weekday"])
+            court_slots.extend(self._create_court_slot_for_date(date, row))
+        return court_slots
+
+    def _create_court_slot_for_date(self, date: Date, row: dict[str, int | float | str]) -> list[court_slot.CourtSlot]:
+        priority = bool(row.get("Priority", False))
+        court_slots: list[court_slot.CourtSlot] = []
+        for concurrent_matches in range(int(row["No. Concurrent Matches"])):
+            _court_slot = court_slot.CourtSlot(date, self, concurrent_matches, priority)
+            court_slots.append(_court_slot)
+            for t in self.teams:
+                if t.availability_group == row["Available"]:
+                    _court_slot.add_team(t)
+        return court_slots
+
+
+def _get_teams_from_gsheet(file_location: str) -> list[dict[str, int | float | str]]:
+    teams_sheet = get_gsheet_worksheet(file_location, "1. Teams Entering")
+    teams_columns = ["League Name", "Team Rank", "Availability Group", "Division", "Comments", "Home Nights Required"]
+    return teams_sheet.get_all_records(expected_headers=teams_columns)
+
+
+def _get_club_names_from_gsheet(file_location: str) -> str:
+    club_info_sheet = get_gsheet_worksheet(file_location, "0. Club Information")
+    return club_info_sheet.get_all_records(expected_headers=["Club Name"])[0]["Club Name"]
+
+
+def _get_club_availability_from_gsheet(file_location: str) -> list[dict[str, int | float | str]]:
+    data = get_gsheet_worksheet(file_location, "2. Availability").get("C11:L300")
+    headers = data.pop(0)
+    return [dict(zip(headers, row, strict=True)) for row in data]

@@ -42,10 +42,10 @@ class League:
         )
         for club_url in _club_entry_management["Entry URL"]:
             if club_url:
-                c = club.Club(self, club_url)
+                c = club.Club(self.dates, club_url)
                 self.clubs.append(c)
 
-        self._get_previous_league_position()
+        # self._get_previous_league_position()
 
         self._generate_fixtures()
 
