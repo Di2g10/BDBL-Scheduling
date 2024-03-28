@@ -37,7 +37,7 @@ This links all the entry spreadsheets and recieves the output schedule
 6. Assign teams to an appropriate division.
 7. Create a copy for each club and send the sheet, or collect details another way and populate the sheet.
 
-
+![img.png](UML.png)
 
 ## Roadmap (TODO)
 1. Expand the comprehensiveness of the current league entry template spreadsheet.
