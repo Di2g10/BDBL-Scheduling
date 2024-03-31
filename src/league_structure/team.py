@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import src.league_structure.fixture_court_slot as fixture_court_slot
 import src.league_structure.club as club
+import src.league_structure.league as league
 
 
 class Team:
@@ -14,8 +15,8 @@ class Team:
 
     def __init__(self, team_club: club.Club, league_name, rank, availability_group, division: int):
         """Initialise the team."""
-        self.club = team_club
-        self.league = league_name
+        self.club: club.Club = team_club
+        self.league: league.League = league_name
         self.rank = rank
         self.availability_group = availability_group
         self.court_slots = []
@@ -44,10 +45,6 @@ class Team:
         print("Away_Fixtures")
         for f in self.away_fixtures:
             print("   ", f.print())
-
-    def club_name(self):
-        """Return the name of the club."""
-        return self.club.name
 
     def get_all_fixtures(
         self,
@@ -84,3 +81,19 @@ class Team:
     def __repr__(self):
         """Return the name of the team."""
         return self.name
+
+    def __eq__(self, other):
+        if not isinstance(other, Team):
+            return False
+
+        self_dict = self.__dict__.copy()
+        other_dict = other.__dict__.copy()
+
+        # remove club & league as causes recursion
+        for key in ["club", "league"]:
+            if key in self_dict:
+                del self_dict[key]
+            if key in other_dict:
+                del other_dict[key]
+
+        return self_dict == other_dict

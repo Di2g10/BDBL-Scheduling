@@ -292,3 +292,8 @@ class League:
     def __repr__(self):
         """Return a string representation of the League Class."""
         return self.name
+
+    def __eq__(self, other):
+        if isinstance(other, League):
+            return self.__dict__ == other.__dict__
+        return False

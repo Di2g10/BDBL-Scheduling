@@ -4,6 +4,7 @@
 import pickle
 import sys
 
+from src.import_league import load_league_data
 from src.league_structure.league import League
 from scheduling import Schedule
 
@@ -15,7 +16,8 @@ def main():
     league_management_url = "https://docs.google.com/spreadsheets/d/1xCEYGyW6FErbfJXhwuXhX23N3QSUJzEu3ryV9Ep0z4M"  # V3
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1oZ2tPoIKX5V9Mvm70LplUPrivn8rW50wa5QmNBX2dwM"
 
-    league = reload_league_data_from_gsheet(_load_from_gsheets=False, _league_management_url=league_management_url)
+    league = load_league_data(league_management_url=league_management_url, use_cache=True)
+    # league = reload_league_data_from_gsheet(_load_from_gsheets=False, _league_management_url=league_management_url)
     # Print League data stats
     league.check_league_data()
 

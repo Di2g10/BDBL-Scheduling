@@ -43,3 +43,8 @@ class Dates:
         min_week = min([d.get_week_number() for d in self.dates])
         max_week = max([d.get_week_number() for d in self.dates])
         return list(range(min_week, max_week))
+
+    def __eq__(self, other):
+        if isinstance(other, Dates):
+            return self.__dict__ == other.__dict__
+        return False

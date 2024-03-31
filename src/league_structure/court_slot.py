@@ -44,3 +44,19 @@ class CourtSlot:
     def __repr__(self):
         """Return the string representation of the court slot."""
         return self.name
+
+    def __eq__(self, other):
+        if not isinstance(other, CourtSlot):
+            return False
+
+        self_dict = self.__dict__.copy()
+        other_dict = other.__dict__.copy()
+
+        # remove club as causes recursion
+        for key in ["date", "club", "teams"]:
+            if key in self_dict:
+                del self_dict[key]
+            if key in other_dict:
+                del other_dict[key]
+
+        return self_dict == other_dict

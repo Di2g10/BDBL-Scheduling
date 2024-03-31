@@ -25,3 +25,8 @@ class Date:
     def get_week_number(self) -> int:
         """Return the week number of the date from the start of the league year."""
         return self.date_delta_from_start.days // 7
+
+    def __eq__(self, other):
+        if isinstance(other, Date):
+            return self.__dict__ == other.__dict__
+        return False

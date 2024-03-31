@@ -77,7 +77,7 @@ class Club:
 
     def _create_team_from_dict(self, team_dict: dict[str, int | float | str]):
         return team.Team(
-            club=self,
+            team_club=self,
             league_name=team_dict["League Name"],
             rank=team_dict["Team Rank"],
             availability_group=team_dict["Availability Group"],
@@ -105,6 +105,11 @@ class Club:
                     _court_slot.add_team(t)
         return court_slots
 
+    def __eq__(self, other):
+        if isinstance(other, Club):
+            return self.__dict__ == other.__dict__
+        return False
+
 
 def _get_teams_from_gsheet(file_location: str) -> list[dict[str, int | float | str]]:
     teams_sheet = get_gsheet_worksheet(file_location, "1. Teams Entering")
@@ -120,4 +125,4 @@ def _get_club_names_from_gsheet(file_location: str) -> str:
 def _get_club_availability_from_gsheet(file_location: str) -> list[dict[str, int | float | str]]:
     data = get_gsheet_worksheet(file_location, "2. Availability").get("C11:L300")
     headers = data.pop(0)
-    return [dict(zip(headers, row, strict=True)) for row in data]
+    return [dict(zip(headers, row)) for row in data]  # noqa b905
