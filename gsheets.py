@@ -27,7 +27,7 @@ def write_gsheet_output_data(output_data, sheet_name, file_location):
     """Write data to a Google sheets spreadsheet."""
     print(datetime.now())
     time.sleep(3)
-    scope = Path("client_secret.json")
+    scope = Path(__file__).parent / "client_secret.json"
     credentials = ServiceAccountCredentials.from_json_keyfile_name(scope)
     client = gspread.authorize(credentials)
     spreadsheet = client.open_by_url(file_location)
@@ -41,6 +41,7 @@ def write_gsheet_output_data(output_data, sheet_name, file_location):
     if not does_sheet_exists:
         output_worksheet = spreadsheet.add_worksheet(title=sheet_name, rows="100", cols="20")
         print("sheet created Called ", output_worksheet)
+
     if output_worksheet:
         output_worksheet.clear()
         output_worksheet.update([output_data.columns.values.tolist(), *output_data.values.tolist()])

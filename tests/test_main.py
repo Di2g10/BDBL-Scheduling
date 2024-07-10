@@ -27,7 +27,7 @@ def test_main():
     print(f"Min Incorrect Weeks = {min_incorrect_weeks}")
     print(f"max prioritised Slots = {max_prioritised_slots}")
 
-    Schedule(
+    result = Schedule(
         league=league,
         predefined_fixtures_url=predefined_fixtures_url,
         allowed_run_time=60,
@@ -35,5 +35,10 @@ def test_main():
         num_forced_prioritised_nights=max_prioritised_slots,
         write_output=True,
     )
+
+    # check a schedule is created.
+
+    # Check gsheets is updated
+    print(result.selected_fixture)
 
     assert True
