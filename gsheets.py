@@ -1,41 +1,47 @@
+"""Module contains functions to read and write data to google sheets."""
+
+import time
+from datetime import datetime
+from pathlib import Path
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from pathlib import Path
-from datetime import datetime, timedelta, date
-import time
 
 
-def get_gsheet_data(_file_location, _sheet_name):
-    """Downloads data from a google sheets spreadsheet"""
+def get_gsheet_worksheet(gsheet_url: str, sheet_name: str) -> gspread.Worksheet:
+    """Download data from a Google sheets spreadsheet.
 
+    :param str gsheet_url: URL of a spreadsheet as it appears in a browser.
+    :param str sheet_name: Name of the sheet to download
+    :return: gspread.Worksheet the specified worksheet"""
     print(datetime.now())
     time.sleep(3)
-    _scope = Path("client_secret.json")
-    _credentials = ServiceAccountCredentials.from_json_keyfile_name(_scope)
-    _client = gspread.authorize(_credentials)
-    _worksheet = _client.open_by_url(_file_location).worksheet(_sheet_name)
-    _data = _worksheet.get_all_records()
-    return _worksheet
+    scope = Path(__file__).parent / "client_secret.json"
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(scope)
+    client = gspread.authorize(credentials)
+    worksheet = client.open_by_url(gsheet_url).worksheet(sheet_name)
+    return worksheet
 
 
-def write_gsheet_output_data(_output_data, _sheet_name, _file_location):
+def write_gsheet_output_data(output_data, sheet_name, file_location):
+    """Write data to a Google sheets spreadsheet."""
     print(datetime.now())
     time.sleep(3)
-    _scope = Path("client_secret.json")
-    _credentials = ServiceAccountCredentials.from_json_keyfile_name(_scope)
-    _client = gspread.authorize(_credentials)
-    _spreadsheet = _client.open_by_url(_file_location)
-    _worksheet_list = _spreadsheet.worksheets()
-    _does_sheet_exists = False
-    for _worksheet in _worksheet_list:
-        if _worksheet.title == _sheet_name:
-            _does_sheet_exists = True
-            _output_worksheet = _worksheet
+    scope = Path(__file__).parent / "client_secret.json"
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(scope)
+    client = gspread.authorize(credentials)
+    spreadsheet = client.open_by_url(file_location)
+    worksheet_list = spreadsheet.worksheets()
+    does_sheet_exists = False
+    for worksheet in worksheet_list:
+        if worksheet.title == sheet_name:
+            does_sheet_exists = True
+            output_worksheet = worksheet
 
-    if not _does_sheet_exists:
-        _output_worksheet = _spreadsheet.add_worksheet(title=_sheet_name, rows="100", cols="20")
-        print("sheet created Called ", _output_worksheet)
+    if not does_sheet_exists:
+        output_worksheet = spreadsheet.add_worksheet(title=sheet_name, rows="100", cols="20")
+        print("sheet created Called ", output_worksheet)
 
-    _output_worksheet.clear()
-    _output_worksheet.update([_output_data.columns.values.tolist()] + _output_data.values.tolist())
-
+    if output_worksheet:
+        output_worksheet.clear()
+        output_worksheet.update([output_data.columns.values.tolist(), *output_data.values.tolist()])

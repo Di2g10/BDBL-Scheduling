@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from gsheets import get_gsheet_data
+from gsheets import get_gsheet_worksheet
 
 
 def main():
@@ -176,7 +176,7 @@ def import_results(sheet_name: str) -> pd.DataFrame:
     file_location = (
         "https://docs.google.com/spreadsheets/d/1cAm73JBscnqmmTybAUzMX5TWStrbwFYlmt9BOv7lnJ0"
     )
-    worksheet = get_gsheet_data(file_location, sheet_name)
+    worksheet = get_gsheet_worksheet(file_location, sheet_name)
     return pd.DataFrame(worksheet.get_all_records())
 
 
