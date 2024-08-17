@@ -38,3 +38,4 @@ ruff
 matplotlib
 mplcursors
 pytest
+pydantic

@@ -10,6 +10,14 @@ import src.league_structure.team as team
 
 from gsheets import get_gsheet_worksheet
 
+from pydantic import BaseModel, Field, ValidationError
+
+
+class ClubModel(BaseModel):
+    name: str = Field(...)
+    teams: list = Field(...)
+    court_slots: list = Field(...)
+
 
 class Club:
     """Club Class.
@@ -21,9 +29,18 @@ class Club:
 
     def __init__(self, dates: Dates, file_location):
         """Initialise the Club Class."""
-        self.name = _get_club_names_from_gsheet(file_location)
-        self.teams: list[team.Team] = self._create_teams_from_gsheet(file_location)
-        self.court_slots: list[court_slot.CourtSlot] = self._create_court_slots(dates, file_location)
+        try:
+            self.name = _get_club_names_from_gsheet(file_location)
+            self.teams: list[team.Team] = self._create_teams_from_gsheet(file_location)
+            self.court_slots: list[court_slot.CourtSlot] = self._create_court_slots(dates, file_location)
+        except PermissionError as error:
+            raise PermissionError(f"Permission failure on sheet {file_location}") from error
+
+        # Checks the Club Has values in all fields
+        try:
+            ClubModel(name=self.name, teams=self.teams, court_slots=self.court_slots)
+        except ValidationError as e:
+            print(e.json())
 
     def write_output(self):
         """Write output for the club."""
@@ -69,7 +86,7 @@ class Club:
         teams: list[team.Team] = []
 
         for row in team_info:
-            if row["Club Name"]:
+            if row["League Name"]:
                 t = self._create_team_from_dict(row)
                 teams.append(t)
 
@@ -85,14 +102,19 @@ class Club:
         )
 
     def _create_court_slots(self, dates: Dates, file_location: str) -> list[court_slot.CourtSlot]:
-        availability = _get_club_availability_from_gsheet(file_location)
-        court_slots: list[court_slot.CourtSlot] = []
-        for row in availability:
-            if row["Available"] == "Unavailable":
-                continue
-            date = dates.add_date(row["Date"], row["League Type"], row["Weekday"])
-            court_slots.extend(self._create_court_slot_for_date(date, row))
-        return court_slots
+        try:
+            availability = _get_club_availability_from_gsheet(file_location)
+            court_slots: list[court_slot.CourtSlot] = []
+            for row in availability:
+                if row["Available"] == "Unavailable":
+                    continue
+                date = dates.add_date(row["Date"], row["League Type"], row["Weekday"])
+                court_slots.extend(self._create_court_slot_for_date(date, row))
+            return court_slots
+        except KeyError as err:
+            raise KeyError(
+                "While running method '_create_court_slots' in class: " + self.name + " an error occurred."
+            ) from err
 
     def _create_court_slot_for_date(self, date: Date, row: dict[str, int | float | str]) -> list[court_slot.CourtSlot]:
         priority = bool(row.get("Priority", False))
@@ -113,7 +135,7 @@ class Club:
 
 def _get_teams_from_gsheet(file_location: str) -> list[dict[str, int | float | str]]:
     teams_sheet = get_gsheet_worksheet(file_location, "1. Teams Entering")
-    teams_columns = ["League Name", "Team Rank", "Availability Group", "Division", "Comments", "Home Nights Required"]
+    teams_columns = ["League Name", "Team Rank", "Availability Group", "Comments", "Home Nights Required"]
     return teams_sheet.get_all_records(expected_headers=teams_columns)
 
 

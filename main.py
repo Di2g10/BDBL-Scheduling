@@ -13,10 +13,11 @@ def main():
     """
     This method is the entry point of the program.
     """
-    league_management_url = "https://docs.google.com/spreadsheets/d/1xCEYGyW6FErbfJXhwuXhX23N3QSUJzEu3ryV9Ep0z4M"  # V3
+    league_management_url = "https://docs.google.com/spreadsheets/d/1D0vvojfFRTnS4H-tqXqUUuHSeA-KlVMwPnOxXbc9Ar4"  # V3
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1oZ2tPoIKX5V9Mvm70LplUPrivn8rW50wa5QmNBX2dwM"
 
-    league = load_league_data(league_management_url=league_management_url, use_cache=True)
+    sys.setrecursionlimit(10000)  # increase the recursion limit
+    league = load_league_data(league_management_url=league_management_url, use_cache=False)
     # league = reload_league_data_from_gsheet(_load_from_gsheets=False, _league_management_url=league_management_url)
     # Print League data stats
     league.check_league_data()
@@ -25,16 +26,15 @@ def main():
 
     # league.write_output()
 
-    # min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
-    # max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
+    min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
+    max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
 
-    min_incorrect_weeks = 1
-    max_prioritised_slots = 6
+    # min_incorrect_weeks = 1
+    # max_prioritised_slots = 6
 
     print(f"Min Incorrect Weeks = {min_incorrect_weeks}")
     print(f"max prioritised Slots = {max_prioritised_slots}")
 
-    2 * 60 * 60
     Schedule(
         league=league,
         predefined_fixtures_url=predefined_fixtures_url,
