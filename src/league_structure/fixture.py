@@ -1,4 +1,5 @@
 """Defines the fixture Class"""
+
 from __future__ import annotations
 
 import src.league_structure.fixture_court_slot as fixture_court_slot

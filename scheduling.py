@@ -1,6 +1,5 @@
 """Define the Schedule class."""
 
-
 import itertools
 import re
 from collections import defaultdict

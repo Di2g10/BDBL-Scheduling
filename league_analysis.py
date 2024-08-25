@@ -1,4 +1,5 @@
 """Run this file to analyse the league results."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 

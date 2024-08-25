@@ -1,6 +1,5 @@
 """Main script to run the analysis."""
 
-
 import pickle
 import sys
 
@@ -45,7 +44,7 @@ def main():
     )
 
 
-def _get_min_incorrect_weeks(league, predefined_fixtures_url, search_start:int = 0, search_end:int = 30):
+def _get_min_incorrect_weeks(league, predefined_fixtures_url, search_start: int = 0, search_end: int = 30):
     for i in range(search_start, search_end):
         print(f"Number Allowed incorrect week fixture = {i}")
         schedule = Schedule(
