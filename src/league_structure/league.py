@@ -298,6 +298,7 @@ class League:
         return self.name
 
     def __eq__(self, other):
+        """Check if two League Classes are equal."""
         if isinstance(other, League):
             return self.__dict__ == other.__dict__
         return False
