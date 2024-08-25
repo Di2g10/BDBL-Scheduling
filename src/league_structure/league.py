@@ -286,7 +286,10 @@ class League:
         dates = (d.date for d in self.dates.dates)
         min_date = min(dates)
         second_year = min_date.year + 1
-        dates_in_second_year = (d.get_week_number() for d in self.dates.dates if d.date.year == second_year)
+        dates_in_second_year = (d.get_week_number() for d in self.dates.dates
+                                if d.date.year == second_year
+                                and d.is_schedulable())
+
         return min(dates_in_second_year)
 
     def __repr__(self):

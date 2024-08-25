@@ -26,6 +26,10 @@ class Date:
         """Return the week number of the date from the start of the league year."""
         return self.date_delta_from_start.days // 7
 
+    def is_schedulable(self) -> bool:
+        """Return True if the date has some court slots."""
+        return bool(self.court_slots)
+
     def __eq__(self, other):
         if isinstance(other, Date):
             return self.__dict__ == other.__dict__

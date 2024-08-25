@@ -526,6 +526,8 @@ class Schedule:
         objective_value = solver.ObjectiveValue()
         print("Objective Value: ", objective_value)
         if status_name in ["FEASIBLE", "OPTIMAL"]:
+            scheduled_fixtures = []
+            unscheduled_fixtures = []
             for fixture in self.league.fixtures:
                 fixture_has_been_scheduled = False
                 for fixture_slot in fixture.fixture_court_slots:
@@ -533,10 +535,12 @@ class Schedule:
                     fixture_slot.is_scheduled = is_scheduled
                     if is_scheduled:
                         fixture_has_been_scheduled = True
-                        print(fixture_slot.friendly_name)
+                        scheduled_fixtures.append(fixture_slot.friendly_name)
                 if fixture_has_been_scheduled is not True:
-                    print(f"Fixture not Scheduled {fixture.name}")
+                    unscheduled_fixtures.append(fixture.name)
                     status_name = "INFEASIBLE"
+            print("Unscheduled Fixtures: ", unscheduled_fixtures)
+            print("Scheduled Fixtures: ", scheduled_fixtures)
 
             # for _fixture_slot in self.league.get_fixture_court_slots():
             #     _is_scheduled = solver.Value(self.selected_fixture[_fixture_slot.identifier])
@@ -551,7 +555,6 @@ class Schedule:
         return status_name
 
     def _write_schedule_to_gsheet(self, _file_location):
-        print("***Test.py***")
         result = [fcs.as_dict() for fcs in self.league.get_fixture_court_slots()]
         _data_dict = pd.DataFrame(result)
         write_gsheet_output_data(_data_dict, "Match Fixture slots", _file_location)

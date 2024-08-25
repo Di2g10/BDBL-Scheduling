@@ -17,7 +17,7 @@ def main():
     predefined_fixtures_url = "https://docs.google.com/spreadsheets/d/1oZ2tPoIKX5V9Mvm70LplUPrivn8rW50wa5QmNBX2dwM"
 
     sys.setrecursionlimit(10000)  # increase the recursion limit
-    league = load_league_data(league_management_url=league_management_url, use_cache=False)
+    league = load_league_data(league_management_url=league_management_url, use_cache=True)
     # league = reload_league_data_from_gsheet(_load_from_gsheets=False, _league_management_url=league_management_url)
     # Print League data stats
     league.check_league_data()
@@ -26,11 +26,11 @@ def main():
 
     # league.write_output()
 
-    min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url)
-    max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
+    # min_incorrect_weeks = _get_min_incorrect_weeks(league, predefined_fixtures_url, search_start=0)
+    # max_prioritised_slots = _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_weeks)
 
-    # min_incorrect_weeks = 1
-    # max_prioritised_slots = 6
+    min_incorrect_weeks = 0
+    max_prioritised_slots = 0
 
     print(f"Min Incorrect Weeks = {min_incorrect_weeks}")
     print(f"max prioritised Slots = {max_prioritised_slots}")
@@ -38,20 +38,20 @@ def main():
     Schedule(
         league=league,
         predefined_fixtures_url=predefined_fixtures_url,
-        allowed_run_time=60,
+        allowed_run_time=600,
         num_allowed_incorrect_fixture_week=min_incorrect_weeks,
         num_forced_prioritised_nights=max_prioritised_slots,
         write_output=True,
     )
 
 
-def _get_min_incorrect_weeks(league, predefined_fixtures_url):
-    for i in range(0, 30):
+def _get_min_incorrect_weeks(league, predefined_fixtures_url, search_start:int = 0, search_end:int = 30):
+    for i in range(search_start, search_end):
         print(f"Number Allowed incorrect week fixture = {i}")
         schedule = Schedule(
             league=league,
             predefined_fixtures_url=predefined_fixtures_url,
-            allowed_run_time=20,
+            allowed_run_time=200,
             num_allowed_incorrect_fixture_week=i,
             write_output=False,
         )
@@ -66,7 +66,7 @@ def _get_max_prioritised_slots(league, predefined_fixtures_url, min_incorrect_we
         schedule_2023 = Schedule(
             league=league,
             predefined_fixtures_url=predefined_fixtures_url,
-            allowed_run_time=20,
+            allowed_run_time=200,
             num_allowed_incorrect_fixture_week=min_incorrect_weeks,
             num_forced_prioritised_nights=i,
             write_output=False,
