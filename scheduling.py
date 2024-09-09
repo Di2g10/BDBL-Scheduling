@@ -406,10 +406,7 @@ class Schedule:
             "Division",
             "Home Team",
             "Away Team",
-            "Status",
-            "Match Date",
-            "Time",
-            "Courts",
+            "Date",
         ]
         _unfixed_fixtures = self.league.get_fixture_court_slots()
         if len(predefined_fixtures) == 0:
@@ -418,7 +415,7 @@ class Schedule:
         for _, row in predefined_fixtures[_headings].iterrows():
             _home_team = self.league.get_team_obj_from_str(_fix_team_name(row["Home Team"]))
             _away_team = self.league.get_team_obj_from_str(_fix_team_name(row["Away Team"]))
-            _date = self.league.get_date_obj_from_str(row["Match Date"])
+            _date = self.league.get_date_obj_from_str(row["Date"])
 
             _fixture_slots = self.league.get_specific_fixture_court_slot(_home_team, _away_team, _date)
             for fs in _fixture_slots:
