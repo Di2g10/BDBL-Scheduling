@@ -1,4 +1,5 @@
 """Defines the fixture Class"""
+
 from __future__ import annotations
 
 import src.league_structure.fixture_court_slot as fixture_court_slot
@@ -29,7 +30,7 @@ class Fixture:
         result: bool = self.home_team in [hf.away_team for hf in self.home_team.home_fixtures]
         return not result
 
-    def print(self):  # noqa A003
+    def print(self):
         """Print the fixture and its fixture court slots."""
         print(self.name)
         for fcs in self.fixture_court_slots:

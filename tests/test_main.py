@@ -1,4 +1,5 @@
 """Test the end to end process works correctly."""
+
 from scheduling import Schedule
 from src.import_league import load_league_data
 

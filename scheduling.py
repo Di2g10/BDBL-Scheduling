@@ -1,6 +1,5 @@
 """Define the Schedule class."""
 
-
 import itertools
 import re
 from collections import defaultdict
@@ -407,10 +406,7 @@ class Schedule:
             "Division",
             "Home Team",
             "Away Team",
-            "Status",
-            "Match Date",
-            "Time",
-            "Courts",
+            "Date",
         ]
         _unfixed_fixtures = self.league.get_fixture_court_slots()
         if len(predefined_fixtures) == 0:
@@ -419,7 +415,7 @@ class Schedule:
         for _, row in predefined_fixtures[_headings].iterrows():
             _home_team = self.league.get_team_obj_from_str(_fix_team_name(row["Home Team"]))
             _away_team = self.league.get_team_obj_from_str(_fix_team_name(row["Away Team"]))
-            _date = self.league.get_date_obj_from_str(row["Match Date"])
+            _date = self.league.get_date_obj_from_str(row["Date"])
 
             _fixture_slots = self.league.get_specific_fixture_court_slot(_home_team, _away_team, _date)
             for fs in _fixture_slots:
@@ -526,6 +522,8 @@ class Schedule:
         objective_value = solver.ObjectiveValue()
         print("Objective Value: ", objective_value)
         if status_name in ["FEASIBLE", "OPTIMAL"]:
+            scheduled_fixtures = []
+            unscheduled_fixtures = []
             for fixture in self.league.fixtures:
                 fixture_has_been_scheduled = False
                 for fixture_slot in fixture.fixture_court_slots:
@@ -533,10 +531,12 @@ class Schedule:
                     fixture_slot.is_scheduled = is_scheduled
                     if is_scheduled:
                         fixture_has_been_scheduled = True
-                        print(fixture_slot.friendly_name)
+                        scheduled_fixtures.append(fixture_slot.friendly_name)
                 if fixture_has_been_scheduled is not True:
-                    print(f"Fixture not Scheduled {fixture.name}")
+                    unscheduled_fixtures.append(fixture.name)
                     status_name = "INFEASIBLE"
+            print("Unscheduled Fixtures: ", unscheduled_fixtures)
+            print("Scheduled Fixtures: ", scheduled_fixtures)
 
             # for _fixture_slot in self.league.get_fixture_court_slots():
             #     _is_scheduled = solver.Value(self.selected_fixture[_fixture_slot.identifier])
@@ -551,7 +551,6 @@ class Schedule:
         return status_name
 
     def _write_schedule_to_gsheet(self, _file_location):
-        print("***Test.py***")
         result = [fcs.as_dict() for fcs in self.league.get_fixture_court_slots()]
         _data_dict = pd.DataFrame(result)
         write_gsheet_output_data(_data_dict, "Match Fixture slots", _file_location)

@@ -43,5 +43,12 @@ def write_gsheet_output_data(output_data, sheet_name, file_location):
         print("sheet created Called ", output_worksheet)
 
     if output_worksheet:
-        output_worksheet.clear()
-        output_worksheet.update([output_data.columns.values.tolist(), *output_data.values.tolist()])
+        try:
+            # Catch any exceptions caused by APIError
+            output_worksheet.clear()
+            output_worksheet.update([output_data.columns.values.tolist(), *output_data.values.tolist()])
+        except gspread.exceptions.APIError as e:
+            print(f"An error occurred: {e}")
+            print(
+                f"Failed to write data to the worksheet. Please check if the document ({file_location}) is protected."
+            )

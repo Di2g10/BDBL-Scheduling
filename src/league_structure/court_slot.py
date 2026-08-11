@@ -1,4 +1,5 @@
 """Defines the court_slot class."""
+
 from __future__ import annotations
 
 from src.league_structure.date import Date

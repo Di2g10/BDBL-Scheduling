@@ -1,4 +1,5 @@
 """Run this file to analyse the league results."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -8,10 +9,10 @@ from gsheets import get_gsheet_worksheet
 def main():
     """Run the analysis."""
     # import the match results and person data from Google sheets
-    match_results_df = import_results("Match Results")
+    match_results_df = import_results("Match Results 2024")
     match_results_processed_df = process_match_results(match_results_df)
 
-    players_df = import_results("Players")
+    players_df = import_results("Players 2024")  # Update headings as per previous years.
     players_df = process_player_results(players_df)
 
     print(match_results_df.head(5).to_markdown())
@@ -20,9 +21,11 @@ def main():
     players_df.to_csv("players.csv")
 
     print(f"Unique Player {players_df['Player'].nunique()}")
-    print(f"Unique Clubs {match_results_processed_df['Club'].nunique()}")
-    print(f"Unique Matches {match_results_processed_df['Match ID'].nunique()}")
-    print(f"Rubbers Played {match_results_processed_df['Score'].sum()}")
+
+    filtered_df = match_results_processed_df[match_results_processed_df["Status"] == "PLD"]
+    print(f"Unique Clubs {filtered_df['Club'].nunique()}")
+    print(f"Unique Matches {filtered_df['Match ID'].nunique()}")
+    print(f"Rubbers Played {filtered_df['Score'].sum()}")
 
     create_division_charts(match_results_processed_df)
 
@@ -50,6 +53,7 @@ def process_match_results(df: pd.DataFrame) -> pd.DataFrame:
     df[["Home Score", "Away Score"]] = (
         df["Score"].str.split("-", expand=True).astype(int).rename({"Score": "Score Text"})
     )
+    df = df.drop("Score", axis=1)
     df["Match Date"] = pd.to_datetime(df["Match Date"])
     shared_columns = [
         "Division",
@@ -70,12 +74,11 @@ def process_match_results(df: pd.DataFrame) -> pd.DataFrame:
         ]
     )
     df = df.sort_values(by=["Match Date", "Time"])
+    df["Score"] = pd.to_numeric(df["Score"], errors="coerce")
     df["Running Total"] = df.groupby(["Division", "Team"])[["Score"]].cumsum()
     df["Matches Played"] = df.groupby(["Division", "Team"])[["Score"]].cumcount() + 1
 
-    df["Current Rank"] = df.groupby(["Division", "Matches Played"])["Running Total"].rank(
-        ascending=True, method="max"
-    )
+    df["Current Rank"] = df.groupby(["Division", "Matches Played"])["Running Total"].rank(ascending=True, method="max")
 
     # Get club from team by removing the division strings "Ladies, Open, Mixed" and anything after
     df["Club"] = df["Team"].str.replace(r"\s*(Ladies|Open|Mixed).*", "", regex=True)
@@ -93,17 +96,13 @@ def process_player_results(df: pd.DataFrame) -> pd.DataFrame:
     Split Matches Played into separate columns
     """
     # Split the 'Rubbers' column into 'Rubbers Won', 'Rubbers Lost', and 'Rubbers Drawn'
-    df[["Rubbers Won", "Rubbers Lost", "Rubbers Drawn"]] = (
-        df["Rubbers"].str.split("/", expand=True).astype(int)
-    )
+    df[["Rubbers Won", "Rubbers Lost", "Rubbers Drawn"]] = df["Rubbers"].str.split("/", expand=True).astype(int)
 
     # Convert the 'Rating' column from percentage string to numeric
     df["Rating"] = df["Rating"].str.rstrip("%").astype(float)
 
     # Split the 'Matches Played' column into 'Matches Played' and 'Fixtures'
-    df[["Matches Played", "Potential Fixtures"]] = (
-        df["Matches Played"].str.split("/", expand=True).astype(int)
-    )
+    df[["Matches Played", "Potential Fixtures"]] = df["Matches Played"].str.split("/", expand=True).astype(int)
 
     df["Played Percentage"] = df["Matches Played"] / df["Potential Fixtures"]
 
@@ -120,12 +119,8 @@ def create_division_charts(match_results_df: pd.DataFrame) -> pd.DataFrame:
     # Identify the different divisions
     divisions = match_results_df["Division"].unique()
     for division in divisions:
-        create_division_chart(
-            match_results_df, division, x_axis="Match Date", y_axis="Running Total"
-        )
-        create_division_chart(
-            match_results_df, division, x_axis="Matches Played", y_axis="Current Rank"
-        )
+        create_division_chart(match_results_df, division, x_axis="Match Date", y_axis="Running Total")
+        create_division_chart(match_results_df, division, x_axis="Matches Played", y_axis="Current Rank")
 
 
 def create_division_chart(
@@ -173,9 +168,7 @@ def create_division_chart(
 def import_results(sheet_name: str) -> pd.DataFrame:
     """Import the results from the Google Sheet."""
     # File shared with digooglesheetsapi@wise-analyst-275114.iam.gserviceaccount.com
-    file_location = (
-        "https://docs.google.com/spreadsheets/d/1cAm73JBscnqmmTybAUzMX5TWStrbwFYlmt9BOv7lnJ0"
-    )
+    file_location = "https://docs.google.com/spreadsheets/d/1cAm73JBscnqmmTybAUzMX5TWStrbwFYlmt9BOv7lnJ0"
     worksheet = get_gsheet_worksheet(file_location, sheet_name)
     return pd.DataFrame(worksheet.get_all_records())
 
